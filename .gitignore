@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Common editors
+.vscode/
+.idea/
+
+# Scripts default output
+**/out/
