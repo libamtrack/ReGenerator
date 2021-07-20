@@ -6,7 +6,7 @@
  * 
  * @param[in] param_one first param
  */
-void one_in_param_no_return_function(int param_one)
+void one_in_param_no_return_function(int param_one);
 
 /**
  * This functions always returns -1
@@ -15,7 +15,7 @@ void one_in_param_no_return_function(int param_one)
  *
  * @return status code
  */
-int one_in_param_int_return_function(int param_one)
+int one_in_param_int_return_function(int param_one);
 
 /**
  * This functions always returns 10
@@ -24,7 +24,7 @@ int one_in_param_int_return_function(int param_one)
  *
  * @return status code
  */
-unsigned int one_in_param_unsigned_int_return_function(int param_one)
+unsigned int one_in_param_unsigned_int_return_function(int param_one);
 
 /**
  * This functions always returns 1.2
@@ -33,7 +33,7 @@ unsigned int one_in_param_unsigned_int_return_function(int param_one)
  *
  * @return dummy number
  */
-float one_in_param_float_return_function(int param_one)
+float one_in_param_float_return_function(int param_one);
 
 /**
  * This functions always returns 0.5
@@ -42,7 +42,7 @@ float one_in_param_float_return_function(int param_one)
  *
  * @return dummy number
  */
-double one_in_param_double_return_function(int param_one)
+double one_in_param_double_return_function(int param_one);
 
 /**
  * This functions always returns true
@@ -51,7 +51,7 @@ double one_in_param_double_return_function(int param_one)
  *
  * @return status code
  */
-bool one_in_param_bool_return_function(int param_one)
+bool one_in_param_bool_return_function(int param_one);
 
 
 #endif

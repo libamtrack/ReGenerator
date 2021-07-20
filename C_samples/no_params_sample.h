@@ -26,20 +26,20 @@ unsigned int no_params_unsigned_int_return_function(void);
  *
  * @return dummy number
  */
-float no_params_float_return_function();
+float no_params_float_return_function(void);
 
 /**
  * This functions always returns 0.5
  *
  * @return dummy number
  */
-double no_params_double_return_function();
+double no_params_double_return_function(void);
 
 /**
  * This functions always returns true
  *
  * @return status code
  */
-bool no_params_bool_return_function();
+bool no_params_bool_return_function(void);
 
 #endif

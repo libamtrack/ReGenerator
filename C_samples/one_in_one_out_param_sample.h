@@ -8,7 +8,7 @@
  * @param[out] param_out second param
  *
  */
-void one_in_one_out_param_no_return_function(int param_in, double* param_out)
+void one_in_one_out_param_no_return_function(int param_in, double* param_out);
 
 /**
  * This functions always returns -1
@@ -18,7 +18,7 @@ void one_in_one_out_param_no_return_function(int param_in, double* param_out)
  *
  * @return status code
  */
-int one_in_one_out_param_int_return_function(int param_in, double* param_out)
+int one_in_one_out_param_int_return_function(int param_in, double* param_out);
 
 /**
  * This functions always returns 10
@@ -28,7 +28,7 @@ int one_in_one_out_param_int_return_function(int param_in, double* param_out)
  *
  * @return status code
  */
-unsigned int one_in_one_out_param_unsigned_int_return_function(int param_in, double* param_out)
+unsigned int one_in_one_out_param_unsigned_int_return_function(int param_in, double* param_out);
 
 /**
  * This functions always returns 1.2
@@ -38,7 +38,7 @@ unsigned int one_in_one_out_param_unsigned_int_return_function(int param_in, dou
  *
  * @return dummy number
  */
-float one_in_one_out_param_float_return_function(int param_in, double* param_out)
+float one_in_one_out_param_float_return_function(int param_in, double* param_out);
 
 /**
  * This functions always returns 0.5
@@ -48,7 +48,7 @@ float one_in_one_out_param_float_return_function(int param_in, double* param_out
  *
  * @return dummy number
  */
-double one_in_one_out_param_double_return_function(int param_in, double* param_out)
+double one_in_one_out_param_double_return_function(int param_in, double* param_out);
 
 /**
  * This functions always returns true
@@ -58,7 +58,7 @@ double one_in_one_out_param_double_return_function(int param_in, double* param_o
  *
  * @return status code
  */
-bool one_in_one_out_param_bool_return_function(int param_in, double* param_out)
+bool one_in_one_out_param_bool_return_function(int param_in, double* param_out);
 
 
 #endif
