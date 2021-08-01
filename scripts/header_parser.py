@@ -33,15 +33,21 @@ import ctypes  # used in eval
 import warnings
 from sys import stderr
 from pathlib import Path
+from collections.abc import Collection
+from typing import Union
 
 from CppHeaderParser import CppHeader, CppMethod, CppVariable
 
 from ctype_translator import mapping
-#  This regex matches a doxygen description of a parameter; examples:
+
+
+#  This regex matches a doxygen description of a parameter, including:
+#  - its access mode (whether it's in/out/in,out)
+#  - its name (docstring requires parameter name, function definition doesn't)
 param_regex = re.compile(
     r"""
     [@\\]param                       # PROPER parameter classifier
-    (?P<mode>(\[(in|out|in,out)])?)  # parameter may be in, out, both or unspecified (in by default)
+    (?P<mode>(\[(in|out|in,\s*out)])?)  # parameter may be in, out, both or unspecified (in by default)
     \s*
     (?P<name>[a-z_][a-z0-9_]*)       # won't match C99's unicode names
     .*$                              # also capture the description
@@ -54,13 +60,14 @@ param_regex = re.compile(
 array_regex = re.compile(r'array\s*of\s*(length|size)\s*(?P<lname>[a-z0-9_]+)')
 
 
-def extract_functions_from_file(path):
+def extract_functions_from_file(path) -> list[CppMethod]:
     try:
         return CppHeader(path).functions
     except IOError:
         raise
     except (TypeError, ValueError, AttributeError) as e:
-        raise ValueError(f'{path} is not a valid C/C++ header file') from e
+        message = f'{path} is not a valid C/C++ header file'
+        raise ValueError(message) from e
 
 
 class Parameter:
@@ -90,14 +97,14 @@ class Parameter:
                         f'{size} is neither a variable '
                         'name nor a numeric literal'
                     )
-                    raise ValueError()
+                    raise ValueError(message)
 
     @property
     def conversion(self):
         return f'\t{self.name} <- as.{self.type}({self.name})'
 
 
-def create_wrapper_for_function(fun: CppMethod):
+def create_wrapper_for_function(fun: CppMethod) -> str:
     """
     Uses a function as parsed by robotpy-cppheaderparser together with its
     doxygen comment in order to create an R wrapper
@@ -156,7 +163,6 @@ def create_wrapper_for_function(fun: CppMethod):
             param_regex.finditer(fun['doxygen']),
             range(len(fun['parameters']))
     ):
-
         param_mode = param_doxy.group('mode')
         array_info = array_regex.search(param_doxy.group(0))
         param_size = array_info.group('lname') if array_info else None
@@ -169,9 +175,7 @@ def create_wrapper_for_function(fun: CppMethod):
                 'Cannot create wrapper for function '
                 '{} (defined in {})'
             ).format(fun["name"], fun["filename"])
-            raise ValueError(
-                message
-            ) from e
+            raise ValueError(message) from e
         if isinstance(param.size, str):
             size_parameters.add(param.size)
 
@@ -193,9 +197,7 @@ def create_wrapper_for_function(fun: CppMethod):
                 '{} is not a parameter of {} (defined in {}'
                 .format(param, fun["name"], fun["filename"])
             )
-            raise ValueError(
-
-            ) from e
+            raise ValueError(message) from e
 
     for param in parameters.values():
         if isinstance(param.size, str):
@@ -249,15 +251,57 @@ def create_wrapper_for_function(fun: CppMethod):
                      + ending) + '\n\n\n'
 
 
-def create_wrappers_for_header_file(path: str, out_dir: str):
+def create_wrappers_for_header_file(path: str,
+                                    out_dir: str,
+                                    namespace: Collection[str] = None):
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     out_path = Path(out_dir + '/' + Path(path).name.replace('.h', '.R'))
-    with open(out_path, 'w') as fout:
-        for func in extract_functions_from_file(path):
+    out_strings = []
+    for func in extract_functions_from_file(path):
+        if namespace is None or func['name'] in namespace:
             try:
-                print(create_wrapper_for_function(func), file=fout, end='')
+                out_strings.append(create_wrapper_for_function(func))
             except Exception as e:
                 print(e, file=stderr)
+    if any(out_strings):  # only create the file if there's anything to write
+        try:
+            # we force utf-8 encoding to avoid any strange encodings windows tends to use on some locales
+            with open(out_path, 'w', encoding='utf-8') as fout:
+                print('\n\n'.join(out_strings), file=fout)
+        except IOError as e:
+            print(e, file=stderr)
+
+
+def read_namespace(path: str) -> Union[tuple[None, None], tuple[set[str], set[str]]]:
+    """
+    Reads the namespace project file specified by path and return functions
+    for which we want to create wrappers and which we want to export.
+
+    Function names should be one per line, optional 'noR:' at the beginning
+    will indicate that we want to create a wrapper, but not export it;
+    comments begin with '#'
+
+    :param path: path to your namespace file
+    :return:
+    """
+    try:
+        # in theory we don't expect any non-ascii characters, but better safe than sorry
+        with open(path, 'r', encoding='utf-8') as fin:
+            names = fin.readlines()
+    except IOError:
+        print("Couldn't retrieve namespace, assuming all functions")
+        return None, None
+    names = map(lambda x: re.sub(r'#.*$', '', x).strip(), names)  # remove comments
+    names = filter(None, names)  # remove empty lines
+    export = set()
+    wrapper = set()
+    for name in names:
+        if name.startswith('noR:'):
+            wrapper.add(name[4:])
+        else:
+            wrapper.add(name)
+            export.add(name.replace('_', '.'))
+    return export, wrapper
 
 
 def main():
@@ -269,9 +313,13 @@ def main():
     parser.add_argument('-o', dest='out_dir', metavar='output_dir',
                         help='directory to write wrappers to, (default ./out)',
                         default='./out')
+    parser.add_argument('-n', dest='namespace', metavar='namespace',
+                        help='path to project namespace file (default ./NAMESPACE)',
+                        default='./NAMESPACE')
     args = parser.parse_args()
+    _, gen_wrapper = read_namespace(args.namespace)
     for infile in args.infile:
-        create_wrappers_for_header_file(infile, args.out_dir)
+        create_wrappers_for_header_file(infile, args.out_dir, gen_wrapper)
 
 
 if __name__ == '__main__':
