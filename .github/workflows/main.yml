@@ -44,6 +44,6 @@ jobs:
          test -e out/multiple_in_out_params_sample.R
          test -e out/one_in_one_out_param_sample.R
          test -e out/only_out_params_sample.R
-         test ! ( -e out/no_params_sample.R )
-         test ! ( -e out/only_in_params_sample.R )
+         test ! '( -e out/no_params_sample.R )'
+         test ! '( -e out/only_in_params_sample.R )'
 
