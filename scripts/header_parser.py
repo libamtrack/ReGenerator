@@ -130,13 +130,15 @@ class Parameter:
                  desc: CppVariable,
                  ordinal: int,
                  mode: str,
-                 size: str = None):
+                 size: str = None,
+                 description: str = ""):
         self.ord = ordinal
         self.type = mapping[eval(desc['ctypes_type'])]
         self.name = desc['name']
         self.mode = mode[1:-1].lower() if mode != '' else 'in'
         self.size = size
         self.targets = []  # only used with size parameters
+        self.description = description
         if size:
             try:
                 if size.startswith('0x'):
@@ -154,65 +156,23 @@ class Parameter:
                     )
                     raise ValueError(message)
 
+    def is_out(self):
+        return 'out' in self.mode
+
     @property
     def conversion(self):
         return f'\t{self.name} <- as.{self.type}({self.name})'
 
 
-def create_wrapper_for_function(fun: CppMethod) -> str:
+def parse_function_info(fun: CppMethod) -> tuple[str, list[Parameter]]:
     """
-    Uses a function as parsed by robotpy-cppheaderparser together with its
-    doxygen comment in order to create an R wrapper
+    Extracts the name and parameters from a given CppMethod object
 
-    Example: the function defined as follows
-
-    ```
-    /**
-     * @brief description
-     * @param[in] param1
-     * @param[in,out] param2 array of length param1
-     * @param[out] param3 array of length param1
-     */
-    int some_func(const int *param1, int *param2, float *param3);
-    ```
-
-    Will produce a wrapper like this
-
-    ```
-    some.func <- function(param2){
-      param1 <- max(length(param2))
-      param2 <- as.integer(param2)
-      param3 <- vector(mode="integer", length=param1)
-      AUTO_RET_PARAMS <- .C("some_func", param1, param2, param3)
-      param2 <- AUTO_RET_PARAMS$param2
-      param3 <- AUTO_RET_PARAMS$param3
-      AUTO_RETVAL <- list("param2" = param2, "param3" = param3
-      return(AUTO_RETVAL)
-    }
-    ```
-
-    :param fun: The function signature together with doxygen comment
-    :type fun: CppMethod
-    :return: The R wrapper for the provided C function
-    :rtype: str
-    :raise: :py:class:`ValueError` when the function can't be parsed
+    :param fun: A CppMethod extracted by robotpy-cppheaderparser
+    :return:
     """
-    func_name = fun['name'].replace('_', '.')
-    signature = [f'{func_name} <- function(']
-    center = ['){']
-    ending = ['\treturn(AUTO_RETVAL)', '}']
-    parameter_list = []
-    call_proper = f'\tAUTO_RET_PARAMS <- .C("{fun["name"]}", '
-    call_params = []
-    before_call = []
-    after_call = []
-
-    parameters: dict[str, Parameter] = {}
-    size_parameters = set()
-
-    # Creates a list of Parameter objects and reads whether they are in or out
-    # from the doxygen. Also designates a Parameter as an array if it matches
-    # `array_regex` and checks if it's a number or a defined parameter
+    func_name = fun['name']
+    params_list = []
     for param_desc, param_doxy, i in zip(
             fun['parameters'],
             param_regex.finditer(fun['doxygen']),
@@ -221,36 +181,84 @@ def create_wrapper_for_function(fun: CppMethod) -> str:
         param_mode = param_doxy.group('mode')
         array_info = array_regex.search(param_doxy.group(0))
         param_size = array_info.group('lname') if array_info else None
+        param_doc = param_doxy.group('desc')
         try:
-            param = parameters[param_desc['name']] = Parameter(
-                param_desc, i, param_mode, param_size
-            )
+            params_list.append(Parameter(
+                param_desc, i, param_mode, param_size, param_doc
+            ))
         except ValueError as e:
             message = (
                 'Cannot create wrapper for function '
                 '{} (defined in {})'
             ).format(fun["name"], fun["filename"])
             raise ValueError(message) from e
-        if isinstance(param.size, str):
-            size_parameters.add(param.size)
+    return func_name, params_list
 
-    list_parameters = sorted(parameters.values(), key=lambda x: x.ord)
-    out_params = [p for p in list_parameters if p.mode in ['out', 'in,out']]
-    if len(out_params) == 0:
-        message = (
-            '{} appears to have no output parameters (defined in {})'
-            .format(fun["name"], fun["filename"])
-        )
-        warnings.warn(message)
-        return ''  # no output parameters, no point in creating a wrapper
+
+def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
+    """
+    Uses a function as parsed by robotpy-cppheaderparser together with its
+    doxygen comment in order to create an R wrapper
+
+    Example: the function defined as follows
+    ::
+        /**
+         * @brief description
+         * @param[in] param1
+         * @param[in,out] param2 array of length param1
+         * @param[out] param3 array of length param1
+         */
+        int some_func(const int *param1, int *param2, float *param3);
+
+    Will produce a wrapper like this
+    ::
+        some.func <- function(param2){
+          param1 <- max(length(param2))
+          param2 <- as.integer(param2)
+          param3 <- vector(mode="integer", length=param1)
+          AUTO_RET_PARAMS <- .C("some_func", param1, param2, param3)
+          param2 <- AUTO_RET_PARAMS$param2
+          param3 <- AUTO_RET_PARAMS$param3
+          AUTO_RETVAL <- list("param2" = param2, "param3" = param3
+          return(AUTO_RETVAL)
+        }
+
+    :param func_name: The name of the C function
+    :type func_name: str
+    :param params_list: List of Parameter objects retrieved from parse_function_info
+    :return: The R wrapper for the provided C function
+    :rtype: str
+    :raise: :py:class:`ValueError` when the function can't be parsed
+    """
+    wrapper_name = func_name.replace('_', '.')
+    signature = [f'{wrapper_name} <- function(']
+    center = ['){']
+    ending = ['\treturn(AUTO_RETVAL)', '}']
+    parameter_list = []
+    call_proper = f'\tAUTO_RET_PARAMS <- .C("{func_name}", '
+    call_params = []
+    before_call = []
+    after_call = []
+
+    parameters: dict[str, Parameter] = {param.name: param for param in params_list}
+    size_parameters = {param for param in params_list if isinstance(param.size, str)}
+
+    out_params = [p for p in params_list if p.mode in ['out', 'in,out']]
+    # if len(out_params) == 0:
+    #     message = (
+    #         '{} appears to have no output parameters'
+    #         .format(func_name)
+    #     )
+    #     warnings.warn(message)
+    #     return ''  # no output parameters, no point in creating a wrapper
     for param in size_parameters:
         try:
             if parameters[param].mode == 'in':
                 parameters[param].mode = 'size'
         except KeyError as e:
             message = (
-                '{} is not a parameter of {} (defined in {}'
-                .format(param, fun["name"], fun["filename"])
+                '{} is not a parameter of {}'
+                .format(param, func_name)
             )
             raise ValueError(message) from e
 
@@ -268,7 +276,7 @@ def create_wrapper_for_function(fun: CppMethod) -> str:
                               in parameters[param].targets]))
         )
 
-    for param in list_parameters:
+    for param in params_list:
         call_params.append(param.name)
         if param.mode in ['in', 'in,out']:
             parameter_list.append('\t' + param.name)
@@ -303,26 +311,45 @@ def create_wrapper_for_function(fun: CppMethod) -> str:
                      + before_call
                      + [call_proper]
                      + after_call
-                     + ending) + '\n\n\n'
+                     + ending)
 
 
 def create_wrappers_for_header_file(path: str,
                                     out_dir: str,
                                     namespace: Collection[str] = None):
     Path(out_dir).mkdir(parents=True, exist_ok=True)
-    out_path = Path(out_dir + '/' + Path(path).name.replace('.h', '.R'))
-    out_strings = []
+    r_out_path = Path(out_dir + '/' + Path(path).name.replace('.h', '.R'))
+    c_out_path = Path(out_dir + '/' + Path(path).name.replace('.h', '_wrappers.c'))
+    r_wrappers = []
+    c_wrappers = []
     for func in extract_functions_from_file(path):
-        if namespace is None or func['name'] in namespace:
+        name, params = parse_function_info(func)
+        if namespace is None or name in namespace:
             try:
-                out_strings.append(create_wrapper_for_function(func))
+                if sum(map(Parameter.is_out, params)) > 0:  # create a .C wrapper if there are output parameters
+                    r_wrapper = create_dot_C_wrapper(name, params)
+                    c_wrapper = ''
+                else:  # create a .Call/.External wrapper
+                    warnings.warn('Generating .Call wrappers is not yet supported')
+                    r_wrapper = c_wrapper = ''
+                r_wrappers.append(r_wrapper)
+                c_wrappers.append(c_wrapper)
             except Exception as e:
                 print(e, file=stderr)
-    if any(out_strings):  # only create the file if there's anything to write
+
+    if any(r_wrappers):  # only create the file if there's anything to write
         try:
             # we force utf-8 encoding to avoid any strange encodings windows tends to use on some locales
-            with open(out_path, 'w', encoding='utf-8') as fout:
-                print('\n\n'.join(out_strings), file=fout)
+            with open(r_out_path, 'w', encoding='utf-8') as fout:
+                print('\n\n\n'.join(filter(None, r_wrappers)), file=fout)
+        except IOError as e:
+            print(e, file=stderr)
+
+    if any(c_wrappers):
+        try:
+            with open(c_out_path, 'w', encoding='utf-8') as fout:
+                print('#include <Rinternals.h>', end='\n\n\n')
+                print('\n\n\n'.join(filter(None, c_wrappers)), file=fout)
         except IOError as e:
             print(e, file=stderr)
 
