@@ -4,27 +4,81 @@ an R wrapper for functions defined inside. It currently supports returning
 a value via parameters, but not with a return statement
 
 Here are examples of what inputs are and aren't accepted by the regexes below
->>> bool(param_regex.fullmatch('@param n'))
-True
->>> bool(param_regex.fullmatch('@param[in] _number_of_items'))
-True
->>> bool(param_regex.fullmatch('\\param[out] res1    result of the function'))
-True
->>> bool(param_regex.fullmatch('\\param[in,out] temp__    temperature measurements before and afer (array of length 14)'))
-True
->>> bool(param_regex.fullmatch('@param names    names of searched people (array of size number_of_people)'))
-True
->>> bool(param_regex.fullmatch('@param 5tomatoes'))
+>>> m = param_regex.fullmatch('@param n')
+>>> m is None
 False
->>> bool(param_regex.fullmatch('param[out] res2  result of another function'))
-False
+>>> m.group('mode')
+''
+>>> m.group('name')
+'n'
+>>> m.group('desc')
+''
 
->>> bool(array_regex.fullmatch('array of length 15'))
-True
->>> bool(array_regex.fullmatch('array of size   number_of_buckets'))
-True
->>> bool(array_regex.fullmatch('array of length -5'))
+>>> m = param_regex.fullmatch('@param[in] _number_of_items')
+>>> m is None
 False
+>>> m.group('mode')
+'[in]'
+>>> m.group('name')
+'_number_of_items'
+>>> m.group('desc')
+''
+
+>>> m = param_regex.fullmatch('\\param[out] res1    result of the function')
+>>> m is None
+False
+>>> m.group('mode')
+'[out]'
+>>> m.group('name')
+'res1'
+>>> m.group('desc')
+'result of the function'
+
+>>> m = param_regex.fullmatch('\\param[in,out] temp__    temperature '
+... 'measurements before and afer (array of length 14)')
+>>> m is None
+False
+>>> m.group('mode')
+'[in,out]'
+>>> m.group('name')
+'temp__'
+>>> m.group('desc')
+'temperature measurements before and afer (array of length 14)'
+
+>>> m = param_regex.fullmatch('@param names    names of searched people (array of size number_of_people)')
+>>> m is None
+False
+>>> m.group('mode')
+''
+>>> m.group('name')
+'names'
+>>> m.group('desc')
+'names of searched people (array of size number_of_people)'
+
+>>> m = param_regex.fullmatch('@param 5tomatoes')
+>>> m is None
+True
+
+>>> m = param_regex.fullmatch('param[out] res2  result of another function')
+>>> m is None
+True
+
+
+>>> m = array_regex.fullmatch('array of length 15')
+>>> m is None
+False
+>>> m.group('lname')
+'15'
+
+>>> m = array_regex.fullmatch('array of size   number_of_buckets')
+>>> m is None
+False
+>>> m.group('lname')
+'number_of_buckets'
+
+>>> m = array_regex.fullmatch('array of length -5')
+>>> m is None
+True
 """
 
 import re
@@ -50,7 +104,8 @@ param_regex = re.compile(
     (?P<mode>(\[(in|out|in,\s*out)])?)  # parameter may be in, out, both or unspecified (in by default)
     \s*
     (?P<name>[a-z_][a-z0-9_]*)       # won't match C99's unicode names
-    .*$                              # also capture the description
+    \s*
+    (?P<desc>.*)$                    # also capture the description
     """, re.VERBOSE | re.MULTILINE | re.IGNORECASE
 )
 
