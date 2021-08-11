@@ -208,20 +208,22 @@ def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
          * @param[in,out] param2 array of length param1
          * @param[out] param3 array of length param1
          */
-        int some_func(const int *param1, int *param2, float *param3);
+        int some_func(const int param1, int *param2, float *param3);
 
     Will produce a wrapper like this
     ::
         some.func <- function(param2){
-          param1 <- max(length(param2))
+          param1 <- min(length(param2))
           param2 <- as.integer(param2)
-          param3 <- vector(mode="integer", length=param1)
+          param3 <- vector(mode="double", length=param1)
           AUTO_RET_PARAMS <- .C("some_func", param1, param2, param3)
           param2 <- AUTO_RET_PARAMS$param2
           param3 <- AUTO_RET_PARAMS$param3
-          AUTO_RETVAL <- list("param2" = param2, "param3" = param3
+          AUTO_RETVAL <- list("param2" = param2, "param3" = param3)
           return(AUTO_RETVAL)
         }
+
+    Node that param2's mode is "double", as R doesn't support single precision
 
     :param func_name: The name of the C function
     :type func_name: str
@@ -318,8 +320,8 @@ def create_wrappers_for_header_file(path: str,
                                     out_dir: str,
                                     namespace: Collection[str] = None):
     Path(out_dir).mkdir(parents=True, exist_ok=True)
-    r_out_path = Path(out_dir + '/' + Path(path).name.replace('.h', '.R'))
-    c_out_path = Path(out_dir + '/' + Path(path).name.replace('.h', '_wrappers.c'))
+    r_out_path = Path(out_dir, Path(path).name.replace('.h', '.R'))
+    c_out_path = Path(out_dir, Path(path).name.replace('.h', '_wrappers.c'))
     r_wrappers = []
     c_wrappers = []
     for func in extract_functions_from_file(path):
@@ -371,7 +373,8 @@ def read_namespace(path: str) -> Union[tuple[None, None], tuple[set[str], set[st
         with open(path, 'r', encoding='utf-8') as fin:
             names = fin.readlines()
     except IOError:
-        print("Couldn't retrieve namespace, assuming all functions")
+        print("Couldn't retrieve namespace file \"{}\", assuming all functions"
+              .format(Path(path).absolute()), file=stderr)
         return None, None
     names = map(lambda x: re.sub(r'#.*$', '', x).strip(), names)  # remove comments
     names = filter(None, names)  # remove empty lines
