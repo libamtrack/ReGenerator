@@ -44,29 +44,29 @@ void two_in_two_out_params_no_return_function(int param_in_one, char* param_in_t
     printf("\r\n");
 }
 
-int two_in_two_out_params_int_return_function(int param_in_one, char* param_in_two, double* param_out_one, char* param_out_two)
+int two_in_two_out_params_int_return_function(int param_in_one, char param_in_two, double* param_out_one, char* param_out_two)
 {
-    return -1 * (param_in_one + (int)*param_in_two);
+    return -1 * (param_in_one + (int)param_in_two);
 }
 
-unsigned int two_in_two_out_params_unsigned_int_return_function(int param_in_one, char* param_in_two, double* param_out_one, char* param_out_two)
+unsigned int two_in_two_out_params_unsigned_int_return_function(int param_in_one, char param_in_two, double* param_out_one, char* param_out_two)
 {
-    return 10 * (param_in_one + (int)*param_in_two);
+    return 10 * (param_in_one + (int)param_in_two);
 }
 
-float two_in_two_out_params_float_return_function(int param_in_one, char* param_in_two, double* param_out_one, char* param_out_two)
+float two_in_two_out_params_float_return_function(int param_in_one, char param_in_two, double* param_out_one, char* param_out_two)
 {
-    return 1.2 * (param_in_one + (int)*param_in_two);
+    return 1.2 * (param_in_one + (int)param_in_two);
 }
 
-double two_in_two_out_params_double_return_function(int param_in_one, char* param_in_two, double* param_out_one, char* param_out_two)
+double two_in_two_out_params_double_return_function(int param_in_one, char param_in_two, double* param_out_one, char* param_out_two)
 {
-    return 0.5 * (param_in_one + (int)*param_in_two);
+    return 0.5 * (param_in_one + (int)param_in_two);
 }
 
-bool two_in_two_out_params_bool_return_function(int param_in_one, char* param_in_two, double* param_out_one, char* param_out_two)
+bool two_in_two_out_params_bool_return_function(int param_in_one, char param_in_two, double* param_out_one, char* param_out_two)
 {
-    return param_in_one > 10 || *param_in_two == 'p';
+    return param_in_one > 10 || param_in_two == 'p';
 }
 
 
