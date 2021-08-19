@@ -80,7 +80,7 @@ bool one_in_two_out_params_bool_return_function(int param_in, double* param_out_
  * @param[out] param_out_two second out param
  *
  */
-void two_in_two_out_params_no_return_function(int param_in_one, char* param_in_two, double* param_out_one, char* param_out_two);
+void two_in_two_out_params_no_return_function(int param_in_one, char param_in_two, double* param_out_one, char* param_out_two);
 
 /**
  * This functions always returns -1
@@ -104,7 +104,7 @@ int two_in_two_out_params_int_return_function(int param_in_one, char* param_in_t
  *
  * @return status code
  */
-unsigned int two_in_two_out_params_unsigned_int_return_function(int param_in_one, char* param_in_two, double* param_out_one, char* param_out_two);
+unsigned int two_in_two_out_params_unsigned_int_return_function(int param_in_one, char param_in_two, double* param_out_one, char* param_out_two);
 
 /**
  * This functions always returns 1.2
@@ -116,7 +116,7 @@ unsigned int two_in_two_out_params_unsigned_int_return_function(int param_in_one
  *
  * @return dummy number
  */
-float two_in_two_out_params_float_return_function(int param_in_one, char* param_in_two, double* param_out_one, char* param_out_two);
+float two_in_two_out_params_float_return_function(int param_in_one, char param_in_two, double* param_out_one, char* param_out_two);
 
 /**
  * This functions always returns 0.5
@@ -128,7 +128,7 @@ float two_in_two_out_params_float_return_function(int param_in_one, char* param_
  *
  * @return dummy number
  */
-double two_in_two_out_params_double_return_function(int param_in_one, char* param_in_two, double* param_out_one, char* param_out_two);
+double two_in_two_out_params_double_return_function(int param_in_one, char param_in_two, double* param_out_one, char* param_out_two);
 
 /**
  * This functions always returns true
@@ -140,7 +140,7 @@ double two_in_two_out_params_double_return_function(int param_in_one, char* para
  *
  * @return status code
  */
-bool two_in_two_out_params_bool_return_function(int param_in_one, char* param_in_two, double* param_out_one, char* param_out_two);
+bool two_in_two_out_params_bool_return_function(int param_in_one, char param_in_two, double* param_out_one, char* param_out_two);
 
 
 /* -------------------- Two in, three out params ------------------------*/
@@ -156,7 +156,7 @@ bool two_in_two_out_params_bool_return_function(int param_in_one, char* param_in
  *
  */
 void two_in_three_out_params_no_return_function(    int param_in_one, 
-                                                    char* param_in_two, 
+                                                    char param_in_two, 
                                                     double* param_out_one, 
                                                     char* param_out_two, 
                                                     unsigned int* param_out_three);
@@ -173,7 +173,7 @@ void two_in_three_out_params_no_return_function(    int param_in_one,
  * @return status code
  */
 int two_in_three_out_params_int_return_function(    int param_in_one, 
-                                                    char* param_in_two, 
+                                                    char param_in_two, 
                                                     double* param_out_one, 
                                                     char* param_out_two, 
                                                     unsigned int* param_out_three);
@@ -190,7 +190,7 @@ int two_in_three_out_params_int_return_function(    int param_in_one,
  * @return status code
  */
 unsigned int two_in_three_out_params_unsigned_int_return_function(  int param_in_one, 
-                                                                    char* param_in_two,
+                                                                    char param_in_two,
                                                                     double* param_out_one, 
                                                                     char* param_out_two, 
                                                                     unsigned int* param_out_three);
@@ -207,7 +207,7 @@ unsigned int two_in_three_out_params_unsigned_int_return_function(  int param_in
  * @return dummy number
  */
 float two_in_three_out_params_float_return_function(    int param_in_one, 
-                                                        char* param_in_two, 
+                                                        char param_in_two, 
                                                         double* param_out_one, 
                                                         char* param_out_two, 
                                                         unsigned int* param_out_three);
@@ -224,7 +224,7 @@ float two_in_three_out_params_float_return_function(    int param_in_one,
  * @return dummy number
  */
 double two_in_three_out_params_double_return_function(  int param_in_one, 
-                                                        char* param_in_two, 
+                                                        char param_in_two, 
                                                         double* param_out_one, 
                                                         char* param_out_two, 
                                                         unsigned int* param_out_three);
@@ -241,7 +241,7 @@ double two_in_three_out_params_double_return_function(  int param_in_one,
  * @return status code
  */
 bool two_in_three_out_params_bool_return_function(  int param_in_one, 
-                                                    char* param_in_two, 
+                                                    char param_in_two, 
                                                     double* param_out_one, 
                                                     char* param_out_two, 
                                                     unsigned int* param_out_three);
@@ -261,7 +261,7 @@ bool two_in_three_out_params_bool_return_function(  int param_in_one,
  *
  */
 void three_in_three_out_params_no_return_function(  int param_in_one, 
-                                                    char* param_in_two,
+                                                    char param_in_two,
                                                     const bool param_in_three,
                                                     double* param_out_one, 
                                                     char* param_out_two, 
@@ -280,7 +280,7 @@ void three_in_three_out_params_no_return_function(  int param_in_one,
  * @return status code
  */
 int three_in_three_out_params_int_return_function(  int param_in_one, 
-                                                    char* param_in_two,
+                                                    char param_in_two,
                                                     const bool param_in_three,
                                                     double* param_out_one, 
                                                     char* param_out_two, 
@@ -299,7 +299,7 @@ int three_in_three_out_params_int_return_function(  int param_in_one,
  * @return status code
  */
 unsigned int three_in_three_out_params_unsigned_int_return_function(    int param_in_one, 
-                                                                        char* param_in_two,
+                                                                        char param_in_two,
                                                                         const bool param_in_three,
                                                                         double* param_out_one, 
                                                                         char* param_out_two, 
@@ -318,7 +318,7 @@ unsigned int three_in_three_out_params_unsigned_int_return_function(    int para
  * @return dummy number
  */
 float three_in_three_out_params_float_return_function(  int param_in_one, 
-                                                        char* param_in_two,
+                                                        char param_in_two,
                                                         const bool param_in_three,
                                                         double* param_out_one, 
                                                         char* param_out_two, 
@@ -337,7 +337,7 @@ float three_in_three_out_params_float_return_function(  int param_in_one,
  * @return dummy number
  */
 double three_in_three_out_params_double_return_function(    int param_in_one, 
-                                                            char* param_in_two,
+                                                            char param_in_two,
                                                             const bool param_in_three,
                                                             double* param_out_one, 
                                                             char* param_out_two, 
@@ -356,9 +356,148 @@ double three_in_three_out_params_double_return_function(    int param_in_one,
  * @return status code
  */
 bool three_in_three_out_params_bool_return_function(    int param_in_one, 
-                                                        char* param_in_two,
+                                                        char param_in_two,
                                                         const bool param_in_three,
                                                         double* param_out_one, 
+                                                        char* param_out_two, 
+                                                        unsigned int* param_out_three);
+
+
+/* -------------------- Five in, three out params ------------------------*/
+
+/**
+ * Prints new line characters on console.
+ * 
+ * @param[in] param_in_one first in param
+ * @param[in] param_in_two second in param
+ * @param[in] param_in_three third in param
+ * @param[in] param_in_four fourth in param - table of chars
+ * @param[in] param_in_three fifth in param - size of table param_in_four
+ * @param[out] param_out_one first out param
+ * @param[out] param_out_two second out param
+ * @param[out] param_out_three third out param
+ *
+ */
+void five_in_three_out_params_no_return_function(  int param_in_one,
+                                                    char param_in_two,
+                                                    const bool param_in_three,
+                                                    char* param_in_four,
+                                                    unsigned int param_in_five,
+                                                    double* param_out_one, 
+                                                    char* param_out_two, 
+                                                    unsigned int* param_out_three);
+
+/**
+ * This functions always returns -1
+ *
+ * @param[in] param_in_one first in param
+ * @param[in] param_in_two second in param
+ * @param[in] param_in_three third in param
+ * @param[in] param_in_four fourth in param - table of chars
+ * @param[in] param_in_three fifth in param - size of table param_in_four
+ * @param[out] param_out_one first out param
+ * @param[out] param_out_two second out param
+ * @param[out] param_out_three third out param
+ *
+ * @return status code
+ */
+int five_in_three_out_params_int_return_function(  int param_in_one,
+                                                    char param_in_two,
+                                                    const bool param_in_three,
+                                                    char* param_in_four,
+                                                    unsigned int param_in_five,
+                                                    double* param_out_one, 
+                                                    char* param_out_two, 
+                                                    unsigned int* param_out_three);
+
+/**
+ * This functions always returns 10
+ *
+ * @param[in] param_in_one first in param
+ * @param[in] param_in_two second in param
+ * @param[in] param_in_three third in param
+ * @param[in] param_in_four fourth in param - table of chars
+ * @param[in] param_in_three fifth in param - size of table param_in_four
+ * @param[out] param_out_one first out param
+ * @param[out] param_out_two second out param
+ * @param[out] param_out_three third out param
+ *
+ * @return status code
+ */
+unsigned int five_in_three_out_params_unsigned_int_return_function(    int param_in_one,
+                                                                        char param_in_two,
+                                                                        const bool param_in_three,
+                                                                        char* param_in_four,
+                                                                        unsigned int param_in_five,
+                                                                        double* param_out_one, 
+                                                                        char* param_out_two, 
+                                                                        unsigned int* param_out_three);
+
+/**
+ * This functions always returns 1.2
+ *
+ * @param[in] param_in_one first in param
+ * @param[in] param_in_two second in param
+ * @param[in] param_in_three third in param
+ * @param[in] param_in_four fourth in param - table of chars
+ * @param[in] param_in_three fifth in param - size of table param_in_four
+ * @param[out] param_out_one first out param
+ * @param[out] param_out_two second out param
+ * @param[out] param_out_three third out param
+ *
+ * @return dummy number
+ */
+float five_in_three_out_params_float_return_function(  int param_in_one,
+                                                        char param_in_two,
+                                                        const bool param_in_three,
+                                                        char* param_in_four,
+                                                        unsigned int param_in_five,
+                                                        double* param_out_one, 
+                                                        char* param_out_two, 
+                                                        unsigned int* param_out_three);
+
+/**
+ * This functions always returns 0.5
+ *
+ * @param[in] param_in_one first in param
+ * @param[in] param_in_two second in param
+ * @param[in] param_in_three third in param
+ * @param[in] param_in_four fourth in param - table of chars
+ * @param[in] param_in_three fifth in param - size of table param_in_four
+ * @param[out] param_out_one first out param
+ * @param[out] param_out_two second out param
+ * @param[out] param_out_three third out param
+ *
+ * @return dummy number
+ */
+double five_in_three_out_params_double_return_function(    int param_in_one,
+                                                            char param_in_two,
+                                                            const bool param_in_three,
+                                                            char* param_in_four,
+                                                            unsigned int param_in_five,
+                                                            double* param_out_one, 
+                                                            char* param_out_two, 
+                                                            unsigned int* param_out_three);
+
+/**
+ * This functions always returns true
+ *
+ * @param[in] param_in_one first in param
+ * @param[in] param_in_two second in param
+ * @param[in] param_in_three third in param
+ * @param[in] param_in_four fourth in param - table of chars
+ * @param[in] param_in_three fifth in param - size of table param_in_four
+ * @param[out] param_out_one first out param
+ * @param[out] param_out_two second out param
+ * @param[out] param_out_three third out param
+ *
+ * @return status code
+ */
+bool five_in_three_out_params_bool_return_function(    int param_in_one,
+                                                        char param_in_two,
+                                                        const bool param_in_three,
+                                                        char* param_in_four,
+                                                        unsigned int param_in_five,
                                                         char* param_out_two, 
                                                         unsigned int* param_out_three);
 
