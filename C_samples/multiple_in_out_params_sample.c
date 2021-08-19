@@ -213,11 +213,21 @@ bool three_in_three_out_params_bool_return_function(    int param_in_one,
 
 /* -------------------- Five in, three out params ------------------------*/
 
+static float table_sum(float* table, unsigned int length)
+{
+    float sum = 0;
+    for (unsigned int i =0; i<length; i++)
+    {
+        sum += table[i];
+    }
+
+    return sum;
+}
 
 void five_in_three_out_params_no_return_function(  int param_in_one,
                                                     char param_in_two,
                                                     const bool param_in_three,
-                                                    char* param_in_four,
+                                                    float* param_in_four,
                                                     unsigned int param_in_five,
                                                     double* param_out_one, 
                                                     char* param_out_two, 
@@ -229,7 +239,7 @@ void five_in_three_out_params_no_return_function(  int param_in_one,
 int five_in_three_out_params_int_return_function(  int param_in_one,
                                                     char param_in_two,
                                                     const bool param_in_three,
-                                                    char* param_in_four,
+                                                    float* param_in_four,
                                                     unsigned int param_in_five,
                                                     double* param_out_one, 
                                                     char* param_out_two, 
@@ -237,30 +247,31 @@ int five_in_three_out_params_int_return_function(  int param_in_one,
 {
     if (param_in_three)
     {
-        return -1 * (param_in_one + (int)param_in_two);
+        return -1 * (param_in_one + (int)param_in_two + (int)table_sum(param_in_four, param_in_five));
     }
     else 
     {
-        return (param_in_one + (int)param_in_two);
+        return (param_in_one + (int)param_in_two + (int)table_sum(param_in_four, param_in_five));
     }
 }
 
+// TODO: correct returned value to be unsigned value
 unsigned int five_in_three_out_params_unsigned_int_return_function(    int param_in_one,
                                                                         char param_in_two,
                                                                         const bool param_in_three,
-                                                                        char* param_in_four,
+                                                                        float* param_in_four,
                                                                         unsigned int param_in_five,
                                                                         double* param_out_one, 
                                                                         char* param_out_two, 
                                                                         unsigned int* param_out_three)
 {
-    return 10 * (param_in_one + (int)param_in_two) * (5 + (int)param_in_three);
+    return 10 * (param_in_one + (int)param_in_two + (int)table_sum(param_in_four, param_in_five)) * (5 + (int)param_in_three);
 }
 
 float five_in_three_out_params_float_return_function(  int param_in_one,
                                                         char param_in_two,
                                                         const bool param_in_three,
-                                                        char* param_in_four,
+                                                        float* param_in_four,
                                                         unsigned int param_in_five,
                                                         double* param_out_one, 
                                                         char* param_out_two, 
@@ -268,42 +279,42 @@ float five_in_three_out_params_float_return_function(  int param_in_one,
 {
     if (param_in_three)
     {
-        return 1.2 * (param_in_one + (int)param_in_two);    
+        return 1.2 * (param_in_one + (int)param_in_two + table_sum(param_in_four, param_in_five));    
     }
     else
     {
-        return -1.2 * (param_in_one + (int)param_in_two);
+        return -1.2 * (param_in_one + (int)param_in_two + table_sum(param_in_four, param_in_five));
     }
 }
 
 double five_in_three_out_params_double_return_function(    int param_in_one,
                                                             char param_in_two,
                                                             const bool param_in_three,
-                                                            char* param_in_four,
+                                                            float* param_in_four,
                                                             unsigned int param_in_five,
                                                             double* param_out_one, 
                                                             char* param_out_two, 
                                                             unsigned int* param_out_three)
 {
-    
+
     if (param_in_three)
     {
-        return 0.5 * (param_in_one + (int)param_in_two);
+        return 0.5 * (param_in_one + (int)param_in_two + table_sum(param_in_four, param_in_five));
     }
     else
     {
-        return -0.5 * (param_in_one + (int)param_in_two);
+        return -0.5 * (param_in_one + (int)param_in_two + table_sum(param_in_four, param_in_five));
     }
 }
 
 bool five_in_three_out_params_bool_return_function(    int param_in_one,
                                                         char param_in_two,
                                                         const bool param_in_three,
-                                                        char* param_in_four,
+                                                        float* param_in_four,
                                                         unsigned int param_in_five,
                                                         char* param_out_two, 
                                                         unsigned int* param_out_three)
 {
-    return param_in_one > 10 || (param_in_two == 'p' && param_in_three);
+    return param_in_one > 10 || (param_in_two == 'p' && param_in_three) || table_sum(param_in_four, param_in_five) < 10.5;
 }
 
