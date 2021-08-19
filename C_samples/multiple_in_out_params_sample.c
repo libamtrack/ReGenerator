@@ -2,6 +2,7 @@
 #include <stdbool.h>
 
 #include "multiple_in_out_params_sample.h"
+#include <math.h>
 
 
 /* -------------------- One in, two out params ------------------------*/
@@ -18,7 +19,7 @@ int one_in_two_out_params_int_return_function(int param_in, double* param_out_on
 
 unsigned int one_in_two_out_params_unsigned_int_return_function(int param_in, double* param_out_one, char* param_out_two)
 {
-    return 10 * param_in;
+    return abs(10 * param_in);
 }
 
 float one_in_two_out_params_float_return_function(int param_in, double* param_out_one, char* param_out_two)
@@ -51,7 +52,7 @@ int two_in_two_out_params_int_return_function(int param_in_one, char param_in_tw
 
 unsigned int two_in_two_out_params_unsigned_int_return_function(int param_in_one, char param_in_two, double* param_out_one, char* param_out_two)
 {
-    return 10 * (param_in_one + (int)param_in_two);
+    return abs( 10 * (param_in_one + (int)param_in_two));
 }
 
 float two_in_two_out_params_float_return_function(int param_in_one, char param_in_two, double* param_out_one, char* param_out_two)
@@ -96,7 +97,7 @@ unsigned int two_in_three_out_params_unsigned_int_return_function(  int param_in
                                                                     char* param_out_two, 
                                                                     unsigned int* param_out_three)
 {
-    return 10 * (param_in_one + (int)param_in_two);
+    return abs( 10 * (param_in_one + (int)param_in_two) );
 }
 
 float two_in_three_out_params_float_return_function(    int param_in_one, 
@@ -163,7 +164,7 @@ unsigned int three_in_three_out_params_unsigned_int_return_function(    int para
                                                                         char* param_out_two, 
                                                                         unsigned int* param_out_three)
 {
-    return 10 * (param_in_one + (int)param_in_two) * (5 + (int)param_in_three);
+    return abs( 10 * (param_in_one + (int)param_in_two) * (5 + (int)param_in_three) );
 }
 
 float three_in_three_out_params_float_return_function(  int param_in_one, 
@@ -255,7 +256,6 @@ int five_in_three_out_params_int_return_function(  int param_in_one,
     }
 }
 
-// TODO: correct returned value to be unsigned value
 unsigned int five_in_three_out_params_unsigned_int_return_function(    int param_in_one,
                                                                         char param_in_two,
                                                                         const bool param_in_three,
@@ -265,7 +265,7 @@ unsigned int five_in_three_out_params_unsigned_int_return_function(    int param
                                                                         char* param_out_two, 
                                                                         unsigned int* param_out_three)
 {
-    return 10 * (param_in_one + (int)param_in_two + (int)table_sum(param_in_four, param_in_five)) * (5 + (int)param_in_three);
+    return abs( 10 * (param_in_one + (int)param_in_two + (int)table_sum(param_in_four, param_in_five)) * (5 + (int)param_in_three) );
 }
 
 float five_in_three_out_params_float_return_function(  int param_in_one,
