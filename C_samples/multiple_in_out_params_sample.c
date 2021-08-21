@@ -217,7 +217,7 @@ bool three_in_three_out_params_bool_return_function(    int param_in_one,
 static float table_sum(float* table, unsigned int length)
 {
     float sum = 0;
-    for (unsigned int i =0; i<length; i++)
+    for (unsigned int i=0; i<length; i++)
     {
         sum += table[i];
     }
