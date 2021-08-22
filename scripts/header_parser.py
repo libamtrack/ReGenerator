@@ -83,7 +83,7 @@ True
 
 import re
 import argparse
-import ctypes  # used in eval
+import ctypes  # used by eval
 import warnings
 from sys import stderr
 from pathlib import Path
@@ -104,8 +104,7 @@ param_regex = re.compile(
     (?P<mode>(\[(in|out|in,\s*out)])?)  # parameter may be in, out, both or unspecified (in by default)
     \s*
     (?P<name>[a-z_][a-z0-9_]*)       # won't match C99's unicode names
-    \s*
-    (?P<desc>.*)$                    # also capture the description
+    (?P<desc>.*?)$                    # also capture the description
     """, re.VERBOSE | re.MULTILINE | re.IGNORECASE
 )
 
@@ -138,7 +137,7 @@ class Parameter:
         self.mode = mode[1:-1].lower() if mode != '' else 'in'
         self.size = size
         self.targets = []  # only used with size parameters
-        self.description = description
+        self.description = description.strip()
         if size:
             try:
                 if size.startswith('0x'):
@@ -159,23 +158,46 @@ class Parameter:
     def is_out(self):
         return 'out' in self.mode
 
+    def is_in(self):
+        return 'in' in self.mode or self.mode == 'size'
+
+    def is_size(self):
+        return self.mode == 'size'
+
+    def is_array(self):
+        return self.size is not None
+
     @property
     def conversion(self):
         return f'\t{self.name} <- as.{self.type}({self.name})'
 
 
-def parse_function_info(fun: CppMethod) -> tuple[str, list[Parameter]]:
+def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, list[Parameter], int]:
     """
     Extracts the name and parameters from a given CppMethod object
 
     :param fun: A CppMethod extracted by robotpy-cppheaderparser
-    :return:
+    :param abs_path: absolute path to the header file
+    :return: tuple containing the function's name, list of its parameters, line number
     """
+    if abs_path is None:
+        abs_path = Path(fun['filename']).absolute()
     func_name = fun['name']
+    line_no = fun['line_number']
     params_list = []
+    params_descriptions = list(param_regex.finditer(fun['doxygen']))
+
+    if len(params_descriptions) != len(fun['parameters']):
+        message = (
+            '{}:{}: Cannot create wrapper for function {}: docstring '
+            'defines {} parameters while function declaration defines {}'
+        ).format(abs_path, line_no, func_name,
+                 len(params_descriptions), len(fun['parameters']))
+        raise ValueError(message)
+
     for param_desc, param_doxy, i in zip(
             fun['parameters'],
-            param_regex.finditer(fun['doxygen']),
+            params_descriptions,
             range(len(fun['parameters']))
     ):
         param_mode = param_doxy.group('mode')
@@ -188,11 +210,26 @@ def parse_function_info(fun: CppMethod) -> tuple[str, list[Parameter]]:
             ))
         except ValueError as e:
             message = (
-                'Cannot create wrapper for function '
-                '{} (defined in {})'
-            ).format(fun["name"], fun["filename"])
+                '{}:{}: Cannot create wrapper for function '
+                '{}: KeyError "{}"'
+            ).format(abs_path, line_no, func_name, e)
             raise ValueError(message) from e
-    return func_name, params_list
+
+    params_dict: dict[str, Parameter] = {param.name: param for param in params_list}
+    for param in params_list:
+        if not isinstance(param.size, str):
+            continue  # only looping over parameters that have a variable size
+        try:
+            if params_dict[param.size].is_in():
+                params_dict[param.size].mode = 'size'
+                params_dict[param.size].targets.append(param.name)
+        except KeyError as e:
+            message = (
+                '{}:{}: {} is not a parameter of {}'
+            ).format(abs_path, line_no, param.size, func_name)
+            raise ValueError(message) from e
+
+    return func_name, params_list, line_no
 
 
 def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
@@ -236,58 +273,33 @@ def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
     signature = [f'{wrapper_name} <- function(']
     center = ['){']
     ending = ['\treturn(AUTO_RETVAL)', '}']
-    parameter_list = []
+    wrapper_params = []
     call_proper = f'\tAUTO_RET_PARAMS <- .C("{func_name}", '
     call_params = []
     before_call = []
     after_call = []
 
-    parameters: dict[str, Parameter] = {param.name: param for param in params_list}
-    size_parameters = {param for param in params_list if isinstance(param.size, str)}
-
-    out_params = [p for p in params_list if p.mode in ['out', 'in,out']]
-    # if len(out_params) == 0:
-    #     message = (
-    #         '{} appears to have no output parameters'
-    #         .format(func_name)
-    #     )
-    #     warnings.warn(message)
-    #     return ''  # no output parameters, no point in creating a wrapper
-    for param in size_parameters:
-        try:
-            if parameters[param].mode == 'in':
-                parameters[param].mode = 'size'
-        except KeyError as e:
-            message = (
-                '{} is not a parameter of {}'
-                .format(param, func_name)
-            )
-            raise ValueError(message) from e
-
-    for param in parameters.values():
-        if isinstance(param.size, str):
-            if param.mode in ['in', 'in,out']:
-                parameters[param.size].targets.append(param)
+    size_parameters = list(filter(Parameter.is_size, params_list))
 
     for param in size_parameters:
         before_call.append(
             '\t{} <- min({})'
             .format(param,
-                    ",".join([f"length({target.name})"
+                    ",".join([f"length({target})"
                               for target
-                              in parameters[param].targets]))
+                              in param.targets]))
         )
 
     for param in params_list:
         call_params.append(param.name)
-        if param.mode in ['in', 'in,out']:
-            parameter_list.append('\t' + param.name)
+        if 'in' in param.mode:
+            wrapper_params.append('\t' + param.name)
             before_call.append(param.conversion)
             if isinstance(param.size, int):
                 before_call.append(
                     f'\tstopifnot(length({param.name}) >= {param.size})'
                 )
-        if param.mode in ['out', 'in,out']:
+        if param.is_out():
             if param.mode == 'out':
                 before_call.append(
                     f'\t{param.name} <- vector(mode = "'
@@ -308,7 +320,7 @@ def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
         )
 
     return '\n'.join(signature
-                     + [',\n'.join(parameter_list)]
+                     + [',\n'.join(wrapper_params)]
                      + center
                      + before_call
                      + [call_proper]
@@ -325,14 +337,15 @@ def create_wrappers_for_header_file(path: str,
     r_wrappers = []
     c_wrappers = []
     for func in extract_functions_from_file(path):
-        name, params = parse_function_info(func)
+        absolute_path = Path(path).absolute()
+        name, params, _ = parse_function_info(func, absolute_path)
         if namespace is None or name in namespace:
             try:
                 if sum(map(Parameter.is_out, params)) > 0:  # create a .C wrapper if there are output parameters
                     r_wrapper = create_dot_C_wrapper(name, params)
                     c_wrapper = ''
                 else:  # create a .Call/.External wrapper
-                    warnings.warn('Generating .Call wrappers is not yet supported')
+                    warnings.warn('Generating .Call wrappers is not yet fully supported')
                     r_wrapper = c_wrapper = ''
                 r_wrappers.append(r_wrapper)
                 c_wrappers.append(c_wrapper)
@@ -350,7 +363,7 @@ def create_wrappers_for_header_file(path: str,
     if any(c_wrappers):
         try:
             with open(c_out_path, 'w', encoding='utf-8') as fout:
-                print('#include <Rinternals.h>', end='\n\n\n')
+                print('#include <Rinternals.h>', end='\n\n\n', file=fout)
                 print('\n\n\n'.join(filter(None, c_wrappers)), file=fout)
         except IOError as e:
             print(e, file=stderr)
