@@ -19,49 +19,48 @@ static double table_sum(double* table, unsigned int length)
 
 /* -------------------- One table in, no out params ------------------------*/
 
-
 void one_table_in_no_out_params_no_return_function( double* table_param_in_one,
-                                                            unsigned int size_param_in_one)
+                                                    unsigned int size_param_in_one)
 {
     return;
 }
 
 int one_table_in_no_out_params_int_return_function( double* table_param_in_one,
-                                                            unsigned int size_param_in_one)
+                                                    unsigned int size_param_in_one)
 {
     return (int)table_sum(table_param_in_one, size_param_in_one);
 }
 
 unsigned int one_table_in_no_out_params_unsigned_int_return_function( double* table_param_in_one,
-                                                                                unsigned int size_param_in_one)
+                                                                        unsigned int size_param_in_one)
 {
     return (unsigned int)abs(table_sum(table_param_in_one, size_param_in_one));
 }
 
 
 float one_table_in_no_out_params_float_return_function( double* table_param_in_one,
-                                                                unsigned int size_param_in_one)
+                                                        unsigned int size_param_in_one)
 {
     return (float)table_sum(table_param_in_one, size_param_in_one);
 }
 
 double one_table_in_no_out_params_double_return_function( double* table_param_in_one,
-                                                                    unsigned int size_param_in_one)
+                                                            unsigned int size_param_in_one)
 {
     return table_sum(table_param_in_one, size_param_in_one);
 }
 
 bool one_table_in_no_out_params_bool_return_function( double* table_param_in_one,
-                                                                unsigned int size_param_in_one)
+                                                        unsigned int size_param_in_one)
 {
-    return table_sum(table_param_in_one, size_param_in_one) < 100;
+    return table_sum(table_param_in_one, size_param_in_one) < 100.0;
 }
 
 
 /* -------------------- No in params, one table out ------------------------*/
 
 void no_in_one_table_out_params_no_return_function( double* table_param_out_one,
-                                                            unsigned int size_param_out_one)
+                                                    unsigned int size_param_out_one)
 {
     for (unsigned int i=0;i<size_param_out_one;i++)
     {
@@ -71,7 +70,7 @@ void no_in_one_table_out_params_no_return_function( double* table_param_out_one,
 }
 
 int no_in_one_table_out_params_int_return_function( double* table_param_out_one,
-                                                            unsigned int size_param_out_one)
+                                                    unsigned int size_param_out_one)
 {
     int sum = 0;
     for (unsigned int i=0;i<size_param_out_one;i++)
@@ -83,7 +82,7 @@ int no_in_one_table_out_params_int_return_function( double* table_param_out_one,
 }
 
 unsigned int no_in_one_table_out_params_unsigned_int_return_function( double* table_param_out_one,
-                                                                                unsigned int size_param_out_one)
+                                                                        unsigned int size_param_out_one)
 {
     unsigned int sum = 0;
     for (unsigned int i=0;i<size_param_out_one;i++)
@@ -96,7 +95,7 @@ unsigned int no_in_one_table_out_params_unsigned_int_return_function( double* ta
 
 
 float no_in_one_table_out_params_float_return_function( double* table_param_out_one,
-                                                                unsigned int size_param_out_one)
+                                                        unsigned int size_param_out_one)
 {
     float sum = 0;
     for (unsigned int i=0;i<size_param_out_one;i++)
@@ -108,7 +107,7 @@ float no_in_one_table_out_params_float_return_function( double* table_param_out_
 }
 
 double no_in_one_table_out_params_double_return_function( double* table_param_out_one,
-                                                                    unsigned int size_param_out_one)
+                                                            unsigned int size_param_out_one)
 {
     double sum = 0;
     for (unsigned int i=0;i<size_param_out_one;i++)
@@ -120,7 +119,7 @@ double no_in_one_table_out_params_double_return_function( double* table_param_ou
 }
 
 bool no_in_one_table_out_params_bool_return_function( double* table_param_out_one,
-                                                                unsigned int size_param_out_one)
+                                                        unsigned int size_param_out_one)
 {
     double sum = 0;
     for (unsigned int i=0;i<size_param_out_one;i++)
@@ -211,7 +210,7 @@ int one_param_in_one_table_out_params_int_return_function( double param_in_one,
 
 unsigned int one_param_in_one_table_out_unsigned_int_return_function( double param_in_one,
                                                                         double* table_param_out_one,
-                                                                            unsigned int size_param_out_one)
+                                                                        unsigned int size_param_out_one)
 {
     unsigned int sum = 0;
     for (unsigned int i=0;i<size_param_out_one;i++)
@@ -288,9 +287,9 @@ int one_table_in_one_table_out_params_int_return_function( double* table_param_i
     return sum;
 }
 
-unsigned int one_table_in_one_table_out_params_unsigned_int_return_function( char* table_param_in_one,
+unsigned int one_table_in_one_table_out_params_unsigned_int_return_function( double* table_param_in_one,
                                                                                 unsigned int size_param_in_one,
-                                                                                double* table_param_out_one,
+                                                                                int* table_param_out_one,
                                                                                 unsigned int size_param_out_one)
 {
     int sum = 0;
@@ -303,9 +302,9 @@ unsigned int one_table_in_one_table_out_params_unsigned_int_return_function( cha
 }
 
 
-float one_table_in_one_table_out_params_float_return_function( char* table_param_in_one,
+float one_table_in_one_table_out_params_float_return_function( double* table_param_in_one,
                                                                 unsigned int size_param_in_one,
-                                                                double* table_param_out_one,
+                                                                int* table_param_out_one,
                                                                 unsigned int size_param_out_one)
 {
     float sum = 0;
@@ -317,9 +316,9 @@ float one_table_in_one_table_out_params_float_return_function( char* table_param
     return sum;
 }
 
-double one_table_in_one_table_out_params_double_return_function( char* table_param_in_one,
+double one_table_in_one_table_out_params_double_return_function( double* table_param_in_one,
                                                                     unsigned int size_param_in_one,
-                                                                    double* table_param_out_one,
+                                                                    int* table_param_out_one,
                                                                     unsigned int size_param_out_one)
 {
     double sum = 0;
@@ -331,9 +330,9 @@ double one_table_in_one_table_out_params_double_return_function( char* table_par
     return sum;
 }
 
-bool one_table_in_one_table_out_params_bool_return_function( char* table_param_in_one,
+bool one_table_in_one_table_out_params_bool_return_function( double* table_param_in_one,
                                                                 unsigned int size_param_in_one,
-                                                                double* table_param_out_one,
+                                                                int* table_param_out_one,
                                                                 unsigned int size_param_out_one)
 {
     double sum = 0;
@@ -344,6 +343,4 @@ bool one_table_in_one_table_out_params_bool_return_function( char* table_param_i
     }
     return sum < 100.0;
 }
-
-
 
