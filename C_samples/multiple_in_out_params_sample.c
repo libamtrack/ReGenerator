@@ -19,7 +19,11 @@ int one_in_two_out_params_int_return_function(int param_in, double* param_out_on
 
 unsigned int one_in_two_out_params_unsigned_int_return_function(int param_in, double* param_out_one, char* param_out_two)
 {
+<<<<<<< HEAD
     return abs(10 * param_in);
+=======
+    return 10 * param_in;
+>>>>>>> origin
 }
 
 float one_in_two_out_params_float_return_function(int param_in, double* param_out_one, char* param_out_two)
@@ -52,7 +56,11 @@ int two_in_two_out_params_int_return_function(int param_in_one, char param_in_tw
 
 unsigned int two_in_two_out_params_unsigned_int_return_function(int param_in_one, char param_in_two, double* param_out_one, char* param_out_two)
 {
+<<<<<<< HEAD
     return abs( 10 * (param_in_one + (int)param_in_two));
+=======
+    return 10 * (param_in_one + (int)param_in_two);
+>>>>>>> origin
 }
 
 float two_in_two_out_params_float_return_function(int param_in_one, char param_in_two, double* param_out_one, char* param_out_two)
@@ -97,7 +105,11 @@ unsigned int two_in_three_out_params_unsigned_int_return_function(  int param_in
                                                                     char* param_out_two, 
                                                                     unsigned int* param_out_three)
 {
+<<<<<<< HEAD
     return abs( 10 * (param_in_one + (int)param_in_two) );
+=======
+    return 10 * (param_in_one + (int)param_in_two);
+>>>>>>> origin
 }
 
 float two_in_three_out_params_float_return_function(    int param_in_one, 
@@ -164,7 +176,11 @@ unsigned int three_in_three_out_params_unsigned_int_return_function(    int para
                                                                         char* param_out_two, 
                                                                         unsigned int* param_out_three)
 {
+<<<<<<< HEAD
     return abs( 10 * (param_in_one + (int)param_in_two) * (5 + (int)param_in_three) );
+=======
+    return 10 * (param_in_one + (int)param_in_two) * (5 + (int)param_in_three);
+>>>>>>> origin
 }
 
 float three_in_three_out_params_float_return_function(  int param_in_one, 
