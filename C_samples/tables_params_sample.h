@@ -138,6 +138,7 @@ double no_in_one_table_out_params_double_return_function( double* table_param_ou
 bool no_in_one_table_out_params_bool_return_function( double* table_param_out_one,
                                                         unsigned int size_param_out_one);
 
+
 /* -------------------- One table in, one param out ------------------------*/
 
 /**
@@ -217,6 +218,7 @@ bool one_table_in_one_out_param_bool_return_function( double* table_param_in_one
                                                         unsigned int size_param_in_one,
                                                         float* param_out_one);
 
+
 /* -------------------- One in param, one table out ------------------------*/
 
 /**
@@ -295,6 +297,7 @@ double one_param_in_one_table_out_double_return_function( double param_in_one,
 bool one_param_in_one_table_out_bool_return_function( double param_in_one,
                                                         double* table_param_out_one,
                                                         unsigned int size_param_out_one);
+
 
 /* -------------------- One table in, one table out params ------------------------*/
 
@@ -386,5 +389,333 @@ bool one_table_in_one_table_out_params_bool_return_function( double* table_param
                                                                 unsigned int size_param_in_one,
                                                                 int* table_param_out_one,
                                                                 unsigned int size_param_out_one);
+
+
+/* -------------------- Two tables in, one table out params ------------------------*/
+
+/**
+ * Writes sums elements of table_param_in_one and table_param_in_two to table_param_out_one.
+ * 
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ */
+void two_tables_in_one_table_out_params_no_return_function( float* table_param_in_one,
+                                                            unsigned int size_param_in_one,
+                                                            int* table_param_in_two,
+                                                            unsigned int size_param_in_two,
+                                                            double* table_param_out_one,
+                                                            unsigned int size_param_out_one);
+
+/**
+ * Writes sums elements of table_param_in_one and table_param_in_two to table_param_out_one and returns number of written elements
+ *
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ * @return number of written elements
+ */
+int two_tables_in_one_table_out_params_int_return_function( float* table_param_in_one,
+                                                            unsigned int size_param_in_one,
+                                                            int* table_param_in_two,
+                                                            unsigned int size_param_in_two,
+                                                            double* table_param_out_one,
+                                                            unsigned int size_param_out_one);
+
+/**
+ * Writes sums elements of table_param_in_one and table_param_in_two to table_param_out_one and returns number of written elements
+ *
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ * @return number of written elements
+ */
+unsigned int two_tables_in_one_table_out_params_unsigned_int_return_function( float* table_param_in_one,
+                                                                                unsigned int size_param_in_one,
+                                                                                int* table_param_in_two,
+                                                                                unsigned int size_param_in_two,
+                                                                                double* table_param_out_one,
+                                                                                unsigned int size_param_out_one);
+
+/**
+ * Writes sums elements of table_param_in_one and table_param_in_two to table_param_out_one and returns sum of written elements.
+ *
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ * @return sum of written elements
+ */
+float two_tables_in_one_table_out_params_float_return_function( float* table_param_in_one,
+                                                                unsigned int size_param_in_one,
+                                                                int* table_param_in_two,
+                                                                unsigned int size_param_in_two,
+                                                                double* table_param_out_one,
+                                                                unsigned int size_param_out_one);
+
+/**
+ * Writes sums elements of table_param_in_one and table_param_in_two to table_param_out_one and returns sum of written elements.
+ *
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ * @return sum of written elements
+ */
+double two_tables_in_one_table_out_params_double_return_function( float* table_param_in_one,
+                                                                    unsigned int size_param_in_one,
+                                                                    int* table_param_in_two,
+                                                                    unsigned int size_param_in_two,
+                                                                    double* table_param_out_one,
+                                                                    unsigned int size_param_out_one);
+
+/**
+ * Writes sums elements of table_param_in_one and table_param_in_two to table_param_out_one and checks if table_param_out_one was filled
+ *
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ * @return boolean value telling if number of written elements is equalt to size_param_out_one
+ */
+bool two_tables_in_one_table_out_params_bool_return_function( float* table_param_in_one,
+                                                                unsigned int size_param_in_one,
+                                                                int* table_param_in_two,
+                                                                unsigned int size_param_in_two,
+                                                                double* table_param_out_one,
+                                                                unsigned int size_param_out_one);
+
+
+/* -------------------- One table in, two tables out params ------------------------*/
+
+
+/**
+ * Writes elements of table_param_in_one to table_param_out_one and to table_param_out_two rounded to integer.
+ * 
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ */
+void one_table_in_two_tables_out_params_no_return_function( float* table_param_in_one,
+                                                            unsigned int size_param_in_one,
+                                                            double* table_param_out_one,
+                                                            unsigned int size_param_out_one,
+                                                            int* table_param_out_two,
+                                                            unsigned int size_param_out_two);
+
+/**
+ * Writes elements of table_param_in_one to table_param_out_one and to table_param_out_two rounded to integer and returns max number of written elements.
+ *
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ * @return max of number of written elements to table_param_out_one and table_param_out_two
+ */
+int one_table_in_two_tables_out_params_int_return_function( float* table_param_in_one,
+                                                            unsigned int size_param_in_one,
+                                                            double* table_param_out_one,
+                                                            unsigned int size_param_out_one,
+                                                            int* table_param_out_two,
+                                                            unsigned int size_param_out_two);
+
+/**
+ * Writes elements of table_param_in_one to table_param_out_one and to table_param_out_two rounded to integer and returns max number of written elements.
+ *
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ * @return max of number of written elements to table_param_out_one and table_param_out_two
+ */
+unsigned int one_table_in_two_tables_out_params_unsigned_int_return_function( float* table_param_in_one,
+                                                                                unsigned int size_param_in_one,
+                                                                                double* table_param_out_one,
+                                                                                unsigned int size_param_out_one,
+                                                                                int* table_param_out_two,
+                                                                                unsigned int size_param_out_two);
+
+/**
+ * Writes elements of table_param_in_one to table_param_out_one and to table_param_out_two rounded to integer and returns max sum of written elements.
+ *
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ * @return max value of sum of written elements to table_param_out_one and table_param_out_two
+ */
+float one_table_in_two_tables_out_params_float_return_function( float* table_param_in_one,
+                                                                unsigned int size_param_in_one,
+                                                                double* table_param_out_one,
+                                                                unsigned int size_param_out_one,
+                                                                int* table_param_out_two,
+                                                                unsigned int size_param_out_two);
+
+/**
+ * Writes elements of table_param_in_one to table_param_out_one and to table_param_out_two rounded to integer and returns max sum of written elements.
+ *
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ * @return max value of sum of written elements to table_param_out_one and table_param_out_two
+ */
+double one_table_in_two_tables_out_params_double_return_function( float* table_param_in_one,
+                                                                    unsigned int size_param_in_one,
+                                                                    double* table_param_out_one,
+                                                                    unsigned int size_param_out_one,
+                                                                    int* table_param_out_two,
+                                                                    unsigned int size_param_out_two);
+
+/**
+ * Writes elements of table_param_in_one to table_param_out_one and to table_param_out_two rounded to integer and checks if table_param_out_one and table_param_out_two were filled.
+ *
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ * @return boolean value telling if number of written elements is equal to size_param_out_one and size_param_out_two
+ */
+bool one_table_in_two_tables_out_params_bool_return_function( float* table_param_in_one,
+                                                                unsigned int size_param_in_one,
+                                                                double* table_param_out_one,
+                                                                unsigned int size_param_out_one,
+                                                                int* table_param_out_two,
+                                                                unsigned int size_param_out_two);
+
+
+/* -------------------- Two tables in, two tables out params ------------------------*/
+
+
+/**
+ * Writes sums elements of table_param_in_one and table_param_in_two to table_param_out_one and sets string to table_param_out_two.
+ * 
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ */
+void two_tables_in_two_tables_out_params_no_return_function( float* table_param_in_one,
+                                                                unsigned int size_param_in_one,
+                                                                int* table_param_in_two,
+                                                                unsigned int size_param_in_two,
+                                                                double* table_param_out_one,
+                                                                unsigned int size_param_out_one,
+                                                                char* table_param_out_two,
+                                                                unsigned int size_param_out_two);
+
+/**
+ * Writes sums elements of table_param_in_one and table_param_in_two to table_param_out_one and returns number of written elements and sets string to table_param_out_two.
+ *
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ * @return number of written elements
+ */
+int two_tables_in_two_tables_out_params_int_return_function( float* table_param_in_one,
+                                                                unsigned int size_param_in_one,
+                                                                int* table_param_in_two,
+                                                                unsigned int size_param_in_two,
+                                                                double* table_param_out_one,
+                                                                unsigned int size_param_out_one,
+                                                                char* table_param_out_two,
+                                                                unsigned int size_param_out_two);
+
+/**
+ * Writes sums elements of table_param_in_one and table_param_in_two to table_param_out_one and returns number of written elements and sets string to table_param_out_two.
+ *
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ * @return number of written elements
+ */
+unsigned int two_tables_in_two_tables_out_params_unsigned_int_return_function( float* table_param_in_one,
+                                                                                unsigned int size_param_in_one,
+                                                                                int* table_param_in_two,
+                                                                                unsigned int size_param_in_two,
+                                                                                double* table_param_out_one,
+                                                                                unsigned int size_param_out_one,
+                                                                                char* table_param_out_two,
+                                                                                unsigned int size_param_out_two);
+
+/**
+ * Writes sums elements of table_param_in_one and table_param_in_two to table_param_out_one and returns sum of written elements and sets string to table_param_out_two.
+ *
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ * @return sum of written elements
+ */
+float two_tables_in_two_tables_out_params_float_return_function( float* table_param_in_one,
+                                                                    unsigned int size_param_in_one,
+                                                                    int* table_param_in_two,
+                                                                    unsigned int size_param_in_two,
+                                                                    double* table_param_out_one,
+                                                                    unsigned int size_param_out_one,
+                                                                    char* table_param_out_two,
+                                                                    unsigned int size_param_out_two);
+
+/**
+ * Writes sums elements of table_param_in_one and table_param_in_two to table_param_out_one and returns sum of written elements and sets string to table_param_out_two.
+ *
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ * @return sum of written elements
+ */
+double two_tables_in_two_tables_out_params_double_return_function( float* table_param_in_one,
+                                                                    unsigned int size_param_in_one,
+                                                                    int* table_param_in_two,
+                                                                    unsigned int size_param_in_two,
+                                                                    double* table_param_out_one,
+                                                                    unsigned int size_param_out_one,
+                                                                    char* table_param_out_two,
+                                                                    unsigned int size_param_out_two);
+
+/**
+ * Writes sums elements of table_param_in_one and table_param_in_two to table_param_out_one and checks if table_param_out_one was filled
+ * and sets string to table_param_out_two.
+ * 
+ * @param[in] table_param_in_one first table in param
+ * @param[in] size_param_in_one size of first in table param
+ * @param[out] table_param_out_one first table out param
+ * @param[out] size_param__out_one size of first table out param
+ *
+ * @return boolean value telling if number of written elements is equal to size_param_out_one
+ */
+bool two_tables_in_two_tables_out_params_bool_return_function( float* table_param_in_one,
+                                                                unsigned int size_param_in_one,
+                                                                int* table_param_in_two,
+                                                                unsigned int size_param_in_two,
+                                                                double* table_param_out_one,
+                                                                unsigned int size_param_out_one,
+                                                                char* table_param_out_two,
+                                                                unsigned int size_param_out_two);
+
 
 #endif

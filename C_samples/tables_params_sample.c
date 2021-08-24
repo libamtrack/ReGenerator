@@ -3,8 +3,11 @@
 
 #include "multiple_in_out_params_sample.h"
 #include <math.h>
+#include <string.h>
 
 /* -------------------- Auxilliary functions ------------------------*/
+
+char* string = "Hello World";
 
 static double table_sum(double* table, unsigned int length)
 {
@@ -344,3 +347,478 @@ bool one_table_in_one_table_out_params_bool_return_function( double* table_param
     return sum < 100.0;
 }
 
+
+/* -------------------- Two tables in, one table out params ------------------------*/
+
+
+void two_tables_in_one_table_out_params_no_return_function( float* table_param_in_one,
+                                                            unsigned int size_param_in_one,
+                                                            int* table_param_in_two,
+                                                            unsigned int size_param_in_two,
+                                                            double* table_param_out_one,
+                                                            unsigned int size_param_out_one)
+{
+    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    {
+        double elem = 0;
+        if (i < size_param_in_one)
+        {
+            elem += table_param_in_one[i];
+        }
+        if (i < size_param_in_two)
+        {
+            elem += table_param_in_two[i];
+        }
+        table_param_out_one[i] = elem;
+    }
+}
+
+int two_tables_in_one_table_out_params_int_return_function( float* table_param_in_one,
+                                                            unsigned int size_param_in_one,
+                                                            int* table_param_in_two,
+                                                            unsigned int size_param_in_two,
+                                                            double* table_param_out_one,
+                                                            unsigned int size_param_out_one)
+{
+    int elems_no = 0;
+    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    {
+        double elem = 0;
+        if (i < size_param_in_one)
+        {
+            elem += table_param_in_one[i];
+        }
+        if (i < size_param_in_two)
+        {
+            elem += table_param_in_two[i];
+        }
+        table_param_out_one[i] = elem;
+        elems_no++;
+    }
+    return elems_no;
+}
+
+unsigned int two_tables_in_one_table_out_params_unsigned_int_return_function( float* table_param_in_one,
+                                                                                unsigned int size_param_in_one,
+                                                                                int* table_param_in_two,
+                                                                                unsigned int size_param_in_two,
+                                                                                double* table_param_out_one,
+                                                                                unsigned int size_param_out_one)
+{
+    int elems_no = 0;
+    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    {
+        double elem = 0;
+        if (i < size_param_in_one)
+        {
+            elem += table_param_in_one[i];
+        }
+        if (i < size_param_in_two)
+        {
+            elem += table_param_in_two[i];
+        }
+        table_param_out_one[i] = elem;
+        elems_no++;
+    }
+    return elems_no;
+}
+
+float two_tables_in_one_table_out_params_float_return_function( float* table_param_in_one,
+                                                                unsigned int size_param_in_one,
+                                                                int* table_param_in_two,
+                                                                unsigned int size_param_in_two,
+                                                                double* table_param_out_one,
+                                                                unsigned int size_param_out_one)
+{
+    float sum = 0;
+    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    {
+        double elem = 0;
+        if (i < size_param_in_one)
+        {
+            elem += table_param_in_one[i];
+        }
+        if (i < size_param_in_two)
+        {
+            elem += table_param_in_two[i];
+        }
+        table_param_out_one[i] = elem;
+        sum += table_param_out_one[i];
+    }
+    return sum;
+}
+
+double two_tables_in_one_table_out_params_double_return_function( float* table_param_in_one,
+                                                                    unsigned int size_param_in_one,
+                                                                    int* table_param_in_two,
+                                                                    unsigned int size_param_in_two,
+                                                                    double* table_param_out_one,
+                                                                    unsigned int size_param_out_one)
+{
+    double sum = 0;
+    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    {
+        double elem = 0;
+        if (i < size_param_in_one)
+        {
+            elem += table_param_in_one[i];
+        }
+        if (i < size_param_in_two)
+        {
+            elem += table_param_in_two[i];
+        }
+        table_param_out_one[i] = elem;
+        sum += table_param_out_one[i];
+    }
+    return sum;
+}
+
+bool two_tables_in_one_table_out_params_bool_return_function( float* table_param_in_one,
+                                                                unsigned int size_param_in_one,
+                                                                int* table_param_in_two,
+                                                                unsigned int size_param_in_two,
+                                                                double* table_param_out_one,
+                                                                unsigned int size_param_out_one)
+{
+    int elems_no = 0;
+    for (unsigned int i=0;i < size_param_out_one && (i < size_param_in_one || i < size_param_in_two);i++)
+    {
+        double elem = 0;
+        if (i < size_param_in_one)
+        {
+            elem += table_param_in_one[i];
+        }
+        if (i < size_param_in_two)
+        {
+            elem += table_param_in_two[i];
+        }
+        table_param_out_one[i] = elem;
+        elems_no++;
+    }
+    return elems_no == size_param_out_one;
+}
+
+
+/* -------------------- One table in, two tables out params ------------------------*/
+
+void one_table_in_two_tables_out_params_no_return_function( float* table_param_in_one,
+                                                            unsigned int size_param_in_one,
+                                                            double* table_param_out_one,
+                                                            unsigned int size_param_out_one,
+                                                            int* table_param_out_two,
+                                                            unsigned int size_param_out_two)
+{
+    int elem_no = 0;
+    for (unsigned int i=0; i < size_param_in_one && (i < size_param_out_one || size_param_out_two); i++)
+    {
+        if (i < size_param_out_one)
+        {
+            table_param_out_one[i] = (double)table_param_in_one[i];
+        }
+        if (i < size_param_out_two)
+        {
+            table_param_out_two[i] = (int)table_param_in_one[i];
+        }
+        elem_no++;
+    }
+}
+
+int one_table_in_two_tables_out_params_int_return_function( float* table_param_in_one,
+                                                            unsigned int size_param_in_one,
+                                                            double* table_param_out_one,
+                                                            unsigned int size_param_out_one,
+                                                            int* table_param_out_two,
+                                                            unsigned int size_param_out_two)
+{
+    int elems_no = 0;
+    for (unsigned int i=0; i < size_param_in_one && (i < size_param_out_one || size_param_out_two); i++)
+    {
+        if (i < size_param_out_one)
+        {
+            table_param_out_one[i] = (double)table_param_in_one[i];
+        }
+        if (i < size_param_out_two)
+        {
+            table_param_out_two[i] = (int)table_param_in_one[i];
+        }
+        elems_no++;
+    }
+    return elems_no;
+}
+
+
+unsigned int one_table_in_two_tables_out_params_unsigned_int_return_function( float* table_param_in_one,
+                                                                                unsigned int size_param_in_one,
+                                                                                double* table_param_out_one,
+                                                                                unsigned int size_param_out_one,
+                                                                                int* table_param_out_two,
+                                                                                unsigned int size_param_out_two)
+{
+    unsigned int elems_no = 0;
+    for (unsigned int i=0; i < size_param_in_one && (i < size_param_out_one || size_param_out_two); i++)
+    {
+        if (i < size_param_out_one)
+        {
+            table_param_out_one[i] = (double)table_param_in_one[i];
+        }
+        if (i < size_param_out_two)
+        {
+            table_param_out_two[i] = (int)table_param_in_one[i];
+        }
+        elems_no++;
+    }
+    return elems_no;
+}
+
+
+float one_table_in_two_tables_out_params_float_return_function( float* table_param_in_one,
+                                                                unsigned int size_param_in_one,
+                                                                double* table_param_out_one,
+                                                                unsigned int size_param_out_one,
+                                                                int* table_param_out_two,
+                                                                unsigned int size_param_out_two)
+{
+    float sum = 0;
+    for (unsigned int i=0; i < size_param_in_one && (i < size_param_out_one || size_param_out_two); i++)
+    {
+        if (i < size_param_out_one)
+        {
+            table_param_out_one[i] = (double)table_param_in_one[i];
+        }
+        if (i < size_param_out_two)
+        {
+            table_param_out_two[i] = (int)table_param_in_one[i];
+        }
+        sum += table_param_in_one[i];
+    }
+    return sum;
+}
+
+
+double one_table_in_two_tables_out_params_double_return_function( float* table_param_in_one,
+                                                                    unsigned int size_param_in_one,
+                                                                    double* table_param_out_one,
+                                                                    unsigned int size_param_out_one,
+                                                                    int* table_param_out_two,
+                                                                    unsigned int size_param_out_two)
+{
+    double sum = 0;
+    for (unsigned int i=0; i < size_param_in_one && (i < size_param_out_one || size_param_out_two); i++)
+    {
+        if (i < size_param_out_one)
+        {
+            table_param_out_one[i] = (double)table_param_in_one[i];
+        }
+        if (i < size_param_out_two)
+        {
+            table_param_out_two[i] = (int)table_param_in_one[i];
+        }
+        sum += table_param_in_one[i];
+    }
+    return sum;
+}
+
+
+bool one_table_in_two_tables_out_params_bool_return_function( float* table_param_in_one,
+                                                                unsigned int size_param_in_one,
+                                                                double* table_param_out_one,
+                                                                unsigned int size_param_out_one,
+                                                                int* table_param_out_two,
+                                                                unsigned int size_param_out_two)
+{
+    int elems_no = 0;
+    for (unsigned int i=0; i < size_param_in_one && (i < size_param_out_one || size_param_out_two); i++)
+    {
+        if (i < size_param_out_one)
+        {
+            table_param_out_one[i] = (double)table_param_in_one[i];
+        }
+        if (i < size_param_out_two)
+        {
+            table_param_out_two[i] = (int)table_param_in_one[i];
+        }
+        elems_no++;
+    }
+    return (elems_no == size_param_out_one) && (elems_no == size_param_out_two);
+}
+
+
+/* -------------------- Two table in, Two table out params ------------------------*/
+
+
+void two_tables_in_two_tables_out_params_no_return_function( float* table_param_in_one,
+                                                                unsigned int size_param_in_one,
+                                                                int* table_param_in_two,
+                                                                unsigned int size_param_in_two,
+                                                                double* table_param_out_one,
+                                                                unsigned int size_param_out_one,
+                                                                char* table_param_out_two,
+                                                                unsigned int size_param_out_two)
+{
+    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    {
+        double elem = 0;
+        if (i < size_param_in_one)
+        {
+            elem += table_param_in_one[i];
+        }
+        if (i < size_param_in_two)
+        {
+            elem += table_param_in_two[i];
+        }
+        table_param_out_one[i] = elem;
+    }
+    
+    strncpy(table_param_out_two, string, size_param_out_two);
+}
+
+
+int two_tables_in_two_tables_out_params_int_return_function( float* table_param_in_one,
+                                                                unsigned int size_param_in_one,
+                                                                int* table_param_in_two,
+                                                                unsigned int size_param_in_two,
+                                                                double* table_param_out_one,
+                                                                unsigned int size_param_out_one,
+                                                                char* table_param_out_two,
+                                                                unsigned int size_param_out_two)
+{
+    int elems_no = 0;
+    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    {
+        double elem = 0;
+        if (i < size_param_in_one)
+        {
+            elem += table_param_in_one[i];
+        }
+        if (i < size_param_in_two)
+        {
+            elem += table_param_in_two[i];
+        }
+        table_param_out_one[i] = elem;
+        elems_no++;
+    }
+    
+    strncpy(table_param_out_two, string, size_param_out_two);
+    return elems_no;
+}
+
+
+unsigned int two_tables_in_two_tables_out_params_unsigned_int_return_function( float* table_param_in_one,
+                                                                                unsigned int size_param_in_one,
+                                                                                int* table_param_in_two,
+                                                                                unsigned int size_param_in_two,
+                                                                                double* table_param_out_one,
+                                                                                unsigned int size_param_out_one,
+                                                                                char* table_param_out_two,
+                                                                                unsigned int size_param_out_two)
+{
+    int elems_no = 0;
+    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    {
+        double elem = 0;
+        if (i < size_param_in_one)
+        {
+            elem += table_param_in_one[i];
+        }
+        if (i < size_param_in_two)
+        {
+            elem += table_param_in_two[i];
+        }
+        table_param_out_one[i] = elem;
+        elems_no++;
+    }
+
+    strncpy(table_param_out_two, string, size_param_out_two);
+    return elems_no;
+}
+
+
+float two_tables_in_two_tables_out_params_float_return_function( float* table_param_in_one,
+                                                                    unsigned int size_param_in_one,
+                                                                    int* table_param_in_two,
+                                                                    unsigned int size_param_in_two,
+                                                                    double* table_param_out_one,
+                                                                    unsigned int size_param_out_one,
+                                                                    char* table_param_out_two,
+                                                                    unsigned int size_param_out_two)
+{
+    float sum = 0;
+    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    {
+        double elem = 0;
+        if (i < size_param_in_one)
+        {
+            elem += table_param_in_one[i];
+        }
+        if (i < size_param_in_two)
+        {
+            elem += table_param_in_two[i];
+        }
+        table_param_out_one[i] = elem;
+        sum += table_param_out_one[i];
+    }
+
+    strncpy(table_param_out_two, string, size_param_out_two);
+    return sum;
+}
+
+
+double two_tables_in_two_tables_out_params_double_return_function( float* table_param_in_one,
+                                                                    unsigned int size_param_in_one,
+                                                                    int* table_param_in_two,
+                                                                    unsigned int size_param_in_two,
+                                                                    double* table_param_out_one,
+                                                                    unsigned int size_param_out_one,
+                                                                    char* table_param_out_two,
+                                                                    unsigned int size_param_out_two)
+{
+    double sum = 0;
+    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    {
+        double elem = 0;
+        if (i < size_param_in_one)
+        {
+            elem += table_param_in_one[i];
+        }
+        if (i < size_param_in_two)
+        {
+            elem += table_param_in_two[i];
+        }
+        table_param_out_one[i] = elem;
+        sum += table_param_out_one[i];
+    }
+    
+    strncpy(table_param_out_two, string, size_param_out_two);
+    return sum;
+}
+
+
+bool two_tables_in_two_tables_out_params_bool_return_function( float* table_param_in_one,
+                                                                unsigned int size_param_in_one,
+                                                                int* table_param_in_two,
+                                                                unsigned int size_param_in_two,
+                                                                double* table_param_out_one,
+                                                                unsigned int size_param_out_one,
+                                                                char* table_param_out_two,
+                                                                unsigned int size_param_out_two)
+{
+    int elems_no = 0;
+    for (unsigned int i=0;i < size_param_out_one && (i < size_param_in_one || i < size_param_in_two);i++)
+    {
+        double elem = 0;
+        if (i < size_param_in_one)
+        {
+            elem += table_param_in_one[i];
+        }
+        if (i < size_param_in_two)
+        {
+            elem += table_param_in_two[i];
+        }
+        table_param_out_one[i] = elem;
+        elems_no++;
+    }
+    
+    strncpy(table_param_out_two, string, size_param_out_two);
+    
+    return elems_no == size_param_out_one;
+}
