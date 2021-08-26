@@ -269,7 +269,8 @@ void one_table_in_one_table_out_params_no_return_function( double* table_param_i
                                                             int* table_param_out_one,
                                                             unsigned int size_param_out_one)
 {
-    for (unsigned int i=0;i<size_param_out_one && i < size_param_in_one;i++)
+    /* We are limiting the loop to the minimum of input table lengh and output table length */
+    for (unsigned int i=0; (i < size_param_out_one) && (i < size_param_in_one); i++)
     {
         table_param_out_one[i] = (int)table_param_in_one[i];
     }
@@ -281,8 +282,9 @@ int one_table_in_one_table_out_params_int_return_function( double* table_param_i
                                                             int* table_param_out_one,
                                                             unsigned int size_param_out_one)
 {
+    /* We are limiting the loop to the minimum of input table lengh and output table length */
     int sum = 0;
-    for (unsigned int i=0;i<size_param_out_one && i < size_param_in_one;i++)
+    for (unsigned int i=0; (i < size_param_out_one) && (i < size_param_in_one); i++)
     {
         table_param_out_one[i] = (int)table_param_in_one[i];
         sum += table_param_out_one[i];
@@ -295,8 +297,9 @@ unsigned int one_table_in_one_table_out_params_unsigned_int_return_function( dou
                                                                                 int* table_param_out_one,
                                                                                 unsigned int size_param_out_one)
 {
+    /* We are limiting the loop to the minimum of input table lengh and output table length */
     int sum = 0;
-    for (unsigned int i=0;i<size_param_out_one && i < size_param_in_one;i++)
+    for (unsigned int i=0; (i < size_param_out_one) && (i < size_param_in_one); i++)
     {
         table_param_out_one[i] = (int)table_param_in_one[i];
         sum += table_param_out_one[i];
@@ -310,8 +313,9 @@ float one_table_in_one_table_out_params_float_return_function( double* table_par
                                                                 int* table_param_out_one,
                                                                 unsigned int size_param_out_one)
 {
+    /* We are limiting the loop to the minimum of input table lengh and output table length */
     float sum = 0;
-    for (unsigned int i=0;i<size_param_out_one && i < size_param_in_one;i++)
+    for (unsigned int i=0; (i < size_param_out_one) && (i < size_param_in_one); i++)
     {
         table_param_out_one[i] = (int)table_param_in_one[i];
         sum += table_param_in_one[i];
@@ -324,8 +328,9 @@ double one_table_in_one_table_out_params_double_return_function( double* table_p
                                                                     int* table_param_out_one,
                                                                     unsigned int size_param_out_one)
 {
+    /* We are limiting the loop to the minimum of input table lengh and output table length */
     double sum = 0;
-    for (unsigned int i=0;i<size_param_out_one && i < size_param_in_one;i++)
+    for (unsigned int i=0; (i < size_param_out_one) && (i < size_param_in_one); i++)
     {
         table_param_out_one[i] = (int)table_param_in_one[i];
         sum += table_param_in_one[i];
@@ -338,8 +343,9 @@ bool one_table_in_one_table_out_params_bool_return_function( double* table_param
                                                                 int* table_param_out_one,
                                                                 unsigned int size_param_out_one)
 {
+    /* We are limiting the loop to the minimum of input table lengh and output table length */
     double sum = 0;
-    for (unsigned int i=0;i<size_param_out_one && i < size_param_in_one;i++)
+    for (unsigned int i=0; (i < size_param_out_one) && (i < size_param_in_one); i++)
     {
         table_param_out_one[i] = (int)table_param_in_one[i];
         sum += table_param_in_one[i];
@@ -358,7 +364,9 @@ void two_tables_in_one_table_out_params_no_return_function( float* table_param_i
                                                             double* table_param_out_one,
                                                             unsigned int size_param_out_one)
 {
-    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    /* We are limiting the loop to the length of the output table.
+       Moreover, the loop is limited to the length of longer of the input tables */
+    for (unsigned int i=0; (i < size_param_out_one) && ((i < size_param_in_one) || (i < size_param_in_two)); i++)
     {
         double elem = 0;
         if (i < size_param_in_one)
@@ -380,8 +388,10 @@ int two_tables_in_one_table_out_params_int_return_function( float* table_param_i
                                                             double* table_param_out_one,
                                                             unsigned int size_param_out_one)
 {
+    /* We are limiting the loop to the length of the output table.
+       Moreover, the loop is limited to the length of longer of the input tables */
     int elems_no = 0;
-    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    for (unsigned int i=0; (i < size_param_out_one) && ((i < size_param_in_one) || (i < size_param_in_two)); i++)
     {
         double elem = 0;
         if (i < size_param_in_one)
@@ -405,8 +415,10 @@ unsigned int two_tables_in_one_table_out_params_unsigned_int_return_function( fl
                                                                                 double* table_param_out_one,
                                                                                 unsigned int size_param_out_one)
 {
+    /* We are limiting the loop to the length of the output table.
+       Moreover, the loop is limited to the length of longer of the input tables */
     int elems_no = 0;
-    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    for (unsigned int i=0; (i < size_param_out_one) && ((i < size_param_in_one) || (i < size_param_in_two)); i++)
     {
         double elem = 0;
         if (i < size_param_in_one)
@@ -430,8 +442,10 @@ float two_tables_in_one_table_out_params_float_return_function( float* table_par
                                                                 double* table_param_out_one,
                                                                 unsigned int size_param_out_one)
 {
+    /* We are limiting the loop to the length of the output table.
+       Moreover, the loop is limited to the length of longer of the input tables */
     float sum = 0;
-    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    for (unsigned int i=0; (i < size_param_out_one) && ((i < size_param_in_one) || (i < size_param_in_two)); i++)
     {
         double elem = 0;
         if (i < size_param_in_one)
@@ -455,8 +469,10 @@ double two_tables_in_one_table_out_params_double_return_function( float* table_p
                                                                     double* table_param_out_one,
                                                                     unsigned int size_param_out_one)
 {
+    /* We are limiting the loop to the length of the output table.
+       Moreover, the loop is limited to the length of longer of the input tables */
     double sum = 0;
-    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    for (unsigned int i=0; (i < size_param_out_one) && ((i < size_param_in_one) || (i < size_param_in_two)); i++)
     {
         double elem = 0;
         if (i < size_param_in_one)
@@ -480,8 +496,10 @@ bool two_tables_in_one_table_out_params_bool_return_function( float* table_param
                                                                 double* table_param_out_one,
                                                                 unsigned int size_param_out_one)
 {
+    /* We are limiting the loop to the length of the output table.
+       Moreover, the loop is limited to the length of longer of the input tables */
     int elems_no = 0;
-    for (unsigned int i=0;i < size_param_out_one && (i < size_param_in_one || i < size_param_in_two);i++)
+    for (unsigned int i=0; (i < size_param_out_one) && ((i < size_param_in_one) || (i < size_param_in_two)); i++)
     {
         double elem = 0;
         if (i < size_param_in_one)
@@ -508,8 +526,10 @@ void one_table_in_two_tables_out_params_no_return_function( float* table_param_i
                                                             int* table_param_out_two,
                                                             unsigned int size_param_out_two)
 {
+    /* We are limiting the loop to the length of the input table.
+       Moreover, the loop is limited to the length of longer of the output tables */
     int elem_no = 0;
-    for (unsigned int i=0; i < size_param_in_one && (i < size_param_out_one || size_param_out_two); i++)
+    for (unsigned int i=0; (i < size_param_in_one) && ((i < size_param_out_one) || (i < size_param_out_two)); i++)
     {
         if (i < size_param_out_one)
         {
@@ -530,8 +550,10 @@ int one_table_in_two_tables_out_params_int_return_function( float* table_param_i
                                                             int* table_param_out_two,
                                                             unsigned int size_param_out_two)
 {
+    /* We are limiting the loop to the length of the input table.
+       Moreover, the loop is limited to the length of longer of the output tables */
     int elems_no = 0;
-    for (unsigned int i=0; i < size_param_in_one && (i < size_param_out_one || size_param_out_two); i++)
+    for (unsigned int i=0; (i < size_param_in_one) && ((i < size_param_out_one) || (i < size_param_out_two)); i++)
     {
         if (i < size_param_out_one)
         {
@@ -554,8 +576,10 @@ unsigned int one_table_in_two_tables_out_params_unsigned_int_return_function( fl
                                                                                 int* table_param_out_two,
                                                                                 unsigned int size_param_out_two)
 {
+    /* We are limiting the loop to the length of the input table.
+       Moreover, the loop is limited to the length of longer of the output tables */
     unsigned int elems_no = 0;
-    for (unsigned int i=0; i < size_param_in_one && (i < size_param_out_one || size_param_out_two); i++)
+    for (unsigned int i=0; (i < size_param_in_one) && ((i < size_param_out_one) || (i < size_param_out_two)); i++)
     {
         if (i < size_param_out_one)
         {
@@ -578,8 +602,10 @@ float one_table_in_two_tables_out_params_float_return_function( float* table_par
                                                                 int* table_param_out_two,
                                                                 unsigned int size_param_out_two)
 {
+    /* We are limiting the loop to the length of the input table.
+       Moreover, the loop is limited to the length of longer of the output tables */
     float sum = 0;
-    for (unsigned int i=0; i < size_param_in_one && (i < size_param_out_one || size_param_out_two); i++)
+    for (unsigned int i=0; (i < size_param_in_one) && ((i < size_param_out_one) || (i < size_param_out_two)); i++)
     {
         if (i < size_param_out_one)
         {
@@ -602,8 +628,10 @@ double one_table_in_two_tables_out_params_double_return_function( float* table_p
                                                                     int* table_param_out_two,
                                                                     unsigned int size_param_out_two)
 {
+    /* We are limiting the loop to the length of the input table.
+       Moreover, the loop is limited to the length of longer of the output tables */
     double sum = 0;
-    for (unsigned int i=0; i < size_param_in_one && (i < size_param_out_one || size_param_out_two); i++)
+    for (unsigned int i=0; (i < size_param_in_one) && ((i < size_param_out_one) || (i < size_param_out_two)); i++)
     {
         if (i < size_param_out_one)
         {
@@ -626,8 +654,10 @@ bool one_table_in_two_tables_out_params_bool_return_function( float* table_param
                                                                 int* table_param_out_two,
                                                                 unsigned int size_param_out_two)
 {
+    /* We are limiting the loop to the length of the input table.
+       Moreover, the loop is limited to the length of longer of the output tables */
     int elems_no = 0;
-    for (unsigned int i=0; i < size_param_in_one && (i < size_param_out_one || size_param_out_two); i++)
+    for (unsigned int i=0; (i < size_param_in_one) && ((i < size_param_out_one) || (i < size_param_out_two)); i++)
     {
         if (i < size_param_out_one)
         {
@@ -655,7 +685,9 @@ void two_tables_in_two_tables_out_params_no_return_function( float* table_param_
                                                                 char* table_param_out_two,
                                                                 unsigned int size_param_out_two)
 {
-    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    /* We are limiting the loop to the length of the output table.
+       Moreover, the loop is limited to the length of longer of the input tables */
+    for (unsigned int i=0; (i < size_param_out_one) && ((i < size_param_in_one) || (i < size_param_in_two));i++)
     {
         double elem = 0;
         if (i < size_param_in_one)
@@ -682,8 +714,10 @@ int two_tables_in_two_tables_out_params_int_return_function( float* table_param_
                                                                 char* table_param_out_two,
                                                                 unsigned int size_param_out_two)
 {
+    /* We are limiting the loop to the length of the output table.
+       Moreover, the loop is limited to the length of longer of the input tables */
     int elems_no = 0;
-    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    for (unsigned int i=0; (i < size_param_out_one) && ((i < size_param_in_one) || (i < size_param_in_two));i++)
     {
         double elem = 0;
         if (i < size_param_in_one)
@@ -712,8 +746,10 @@ unsigned int two_tables_in_two_tables_out_params_unsigned_int_return_function( f
                                                                                 char* table_param_out_two,
                                                                                 unsigned int size_param_out_two)
 {
+    /* We are limiting the loop to the length of the output table.
+       Moreover, the loop is limited to the length of longer of the input tables */
     int elems_no = 0;
-    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    for (unsigned int i=0; (i < size_param_out_one) && ((i < size_param_in_one) || (i < size_param_in_two));i++)
     {
         double elem = 0;
         if (i < size_param_in_one)
@@ -742,8 +778,10 @@ float two_tables_in_two_tables_out_params_float_return_function( float* table_pa
                                                                     char* table_param_out_two,
                                                                     unsigned int size_param_out_two)
 {
+    /* We are limiting the loop to the length of the output table.
+       Moreover, the loop is limited to the length of longer of the input tables */
     float sum = 0;
-    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    for (unsigned int i=0; (i < size_param_out_one) && ((i < size_param_in_one) || (i < size_param_in_two));i++)
     {
         double elem = 0;
         if (i < size_param_in_one)
@@ -772,8 +810,10 @@ double two_tables_in_two_tables_out_params_double_return_function( float* table_
                                                                     char* table_param_out_two,
                                                                     unsigned int size_param_out_two)
 {
+    /* We are limiting the loop to the length of the output table.
+       Moreover, the loop is limited to the length of longer of the input tables */
     double sum = 0;
-    for (unsigned int i=0;i<size_param_out_one && (i<size_param_in_one || i<size_param_in_two);i++)
+    for (unsigned int i=0; (i < size_param_out_one) && ((i < size_param_in_one) || (i < size_param_in_two));i++)
     {
         double elem = 0;
         if (i < size_param_in_one)
@@ -802,8 +842,10 @@ bool two_tables_in_two_tables_out_params_bool_return_function( float* table_para
                                                                 char* table_param_out_two,
                                                                 unsigned int size_param_out_two)
 {
+    /* We are limiting the loop to the length of the output table.
+       Moreover, the loop is limited to the length of longer of the input tables */
     int elems_no = 0;
-    for (unsigned int i=0;i < size_param_out_one && (i < size_param_in_one || i < size_param_in_two);i++)
+    for (unsigned int i=0; (i < size_param_out_one) && ((i < size_param_in_one) || (i < size_param_in_two));i++)
     {
         double elem = 0;
         if (i < size_param_in_one)
