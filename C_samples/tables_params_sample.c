@@ -701,7 +701,7 @@ void two_tables_in_two_tables_out_params_no_return_function( float* table_param_
         table_param_out_one[i] = elem;
     }
     
-    strncpy(table_param_out_two, string, size_param_out_two);
+    strncpy(table_param_out_two, string, size_param_out_two - 1);
 }
 
 
@@ -732,7 +732,7 @@ int two_tables_in_two_tables_out_params_int_return_function( float* table_param_
         elems_no++;
     }
     
-    strncpy(table_param_out_two, string, size_param_out_two);
+    strncpy(table_param_out_two, string, size_param_out_two - 1);
     return elems_no;
 }
 
@@ -764,7 +764,7 @@ unsigned int two_tables_in_two_tables_out_params_unsigned_int_return_function( f
         elems_no++;
     }
 
-    strncpy(table_param_out_two, string, size_param_out_two);
+    strncpy(table_param_out_two, string, size_param_out_two - 1);
     return elems_no;
 }
 
@@ -796,7 +796,7 @@ float two_tables_in_two_tables_out_params_float_return_function( float* table_pa
         sum += table_param_out_one[i];
     }
 
-    strncpy(table_param_out_two, string, size_param_out_two);
+    strncpy(table_param_out_two, string, size_param_out_two - 1);
     return sum;
 }
 
@@ -828,7 +828,7 @@ double two_tables_in_two_tables_out_params_double_return_function( float* table_
         sum += table_param_out_one[i];
     }
     
-    strncpy(table_param_out_two, string, size_param_out_two);
+    strncpy(table_param_out_two, string, size_param_out_two - 1);
     return sum;
 }
 
@@ -860,7 +860,7 @@ bool two_tables_in_two_tables_out_params_bool_return_function( float* table_para
         elems_no++;
     }
     
-    strncpy(table_param_out_two, string, size_param_out_two);
+    strncpy(table_param_out_two, string, size_param_out_two - 1);
     
     return elems_no == size_param_out_one;
 }
