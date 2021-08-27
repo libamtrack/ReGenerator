@@ -32,7 +32,7 @@ False
 >>> m.group('name')
 'res1'
 >>> m.group('desc')
-'result of the function'
+'    result of the function'
 
 >>> m = param_regex.fullmatch('\\param[in,out] temp__    temperature '
 ... 'measurements before and afer (array of length 14)')
@@ -43,7 +43,7 @@ False
 >>> m.group('name')
 'temp__'
 >>> m.group('desc')
-'temperature measurements before and afer (array of length 14)'
+'    temperature measurements before and afer (array of length 14)'
 
 >>> m = param_regex.fullmatch('@param names    names of searched people (array of size number_of_people)')
 >>> m is None
@@ -53,7 +53,7 @@ False
 >>> m.group('name')
 'names'
 >>> m.group('desc')
-'names of searched people (array of size number_of_people)'
+'    names of searched people (array of size number_of_people)'
 
 >>> m = param_regex.fullmatch('@param 5tomatoes')
 >>> m is None
