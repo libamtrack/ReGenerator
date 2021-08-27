@@ -249,40 +249,47 @@ def generate_external_call(func_name: str,
 
 def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
     """
-    Uses a function as parsed by robotpy-cppheaderparser together with its
-    doxygen comment in order to create an R wrapper
+    Uses a function name and parameters list returned by parse_function_info
+    to create an R wrapper with its .C function
 
     Example: the function defined as follows
     ::
         /**
-         * @brief description
-         * @param[in] param1
-         * @param[in,out] param2 array of length param1
-         * @param[out] param3 array of length param1
+         * calculates time step for balancing pressure in pipes
+         * @param         n         number of segments
+         * @param         dt        time step size
+         * @param[in]     widths    widths of pipe segments (array of length n)
+         * @param[in,out] pressures array of length n, pressures before and after
+         * @param[out]    dp        pressure changes (array of size n)
          */
-        int some_func(const int param1, int *param2, float *param3);
+        int pressure_step(const int n, const float dt, const float *widths, float *pressures, float *dp);
 
     Will produce a wrapper like this
     ::
-        some.func <- function(param2){
-          param1 <- min(length(param2))
-          param2 <- as.integer(param2)
-          param3 <- vector(mode="double", length=param1)
-          AUTO_RET_PARAMS <- .C("some_func", param1, param2, param3)
-          param2 <- AUTO_RET_PARAMS$param2
-          param3 <- AUTO_RET_PARAMS$param3
-          AUTO_RETVAL <- list("param2" = param2, "param3" = param3)
-          return(AUTO_RETVAL)
+        pressure.step <- function(
+            dt,
+            widths,
+            pressures
+        ){
+            n <- min(length(widths), length(pressures), length(dp))
+            dt <- as.single(dt)
+            widths <- as.single(widths)
+            stopifnot(length(widths) >= n)
+            pressures <- as.single(pressures)
+            stopifnot(length(pressures) >= n)
+            dp <- single(n)
+            AUTO_RET_PARAMS <- .C("pressure_step", n, dt, widths, pressures, dp)
+            pressures <- AUTO_RET_PARAMS$pressures
+            dp <- AUTO_RET_PARAMS$dp
+            AUTO_RETVAL <- list("pressures" = pressures, "dp" = dp)
+            return(AUTO_RETVAL)
         }
-
-    Node that param2's mode is "double", as R doesn't support single precision
 
     :param func_name: The name of the C function
     :type func_name: str
     :param params_list: List of Parameter objects retrieved from parse_function_info
     :return: The R wrapper for the provided C function
     :rtype: str
-    :raise: :py:class:`ValueError` when the function can't be parsed
     """
     wrapper_name = func_name.replace('_', '.')
     signature = [f'{wrapper_name} <- function(']
@@ -301,8 +308,8 @@ def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
     for param in size_parameters:
         before_call.append(
             '\t{} <- min({})'
-            .format(param,
-                    ",".join([f"length({target})"
+            .format(param.name,
+                    ", ".join([f"length({target})"
                               for target
                               in param.targets]))
         )
@@ -318,9 +325,8 @@ def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
         if param.is_out():
             if param.mode == 'out':
                 before_call.append(
-                    f'\t{param.name} <- vector(mode = "'
-                    f'{"double" if param.type == "single" else param.type}'
-                    f'", length = {param.size if param.size else 1})'
+                    f'\t{param.name} <- {param.type}('
+                    f'{param.size if param.size else 1})'
                 )
             after_call.append(
                 f'\t{param.name} <- AUTO_RET_PARAMS${param.name}'
@@ -331,7 +337,7 @@ def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
     else:
         after_call.append(
             '\tAUTO_RETVAL <- list({})'
-            .format(",".join([f'"{p.name}" = {p.name}' for p in out_params]))
+            .format(", ".join([f'"{p.name}" = {p.name}' for p in out_params]))
         )
 
     return '\n'.join(
@@ -346,11 +352,45 @@ def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
 
 
 def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> str:
+    """
+    Uses a function name and parameters list returned by parse_function_info
+    to create an R wrapper with its .Call function
+
+    Example: the function defined as follows
+    ::
+        /**
+         * calculates time step for balancing pressure in pipes
+         * @param n  number of items
+         * @param xs numbers to take mean of (array of length n)
+         * @return harmonic mean of xs
+         */
+        double harmonic_mean(const int n, const double *xs);
+
+    Will produce a wrapper like this
+    ::
+        harmonic.mean <- function(
+            xs
+        ){
+            xs <- as.double(xs)
+            n <- min(length(xs))
+            stopifnot(length(xs) >= n)
+            return(.Call("harmonic_mean_wrapper", n, xs))
+        }
+
+    :param func_name: The name of the C function
+    :type func_name: str
+    :param params_list: List of Parameter objects retrieved from parse_function_info
+    :return: The R wrapper for the provided C function
+    :rtype: str
+    """
     wrapper_name = func_name.replace('_', '.')
     signature = [f'{wrapper_name} <- function(']
     wrapper_params = []
     center = ['){']
-    call_proper = ['\t'+generate_external_call(func_name, params_list, '.Call'), '}']
+    call_proper = [
+        f'\treturn({generate_external_call(func_name, params_list, ".Call")})',
+        '}'
+    ]
     size_derivations = []
     size_checks = []
     type_conversions = []
@@ -366,9 +406,9 @@ def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> s
             type_conversions.append(param.conversion)
         else:
             size_derivations.append(
-                '{} <- min({})'.format(
+                '\t{} <- min({})'.format(
                     param.name,
-                    ','.join(f'length({t})' for t in param.targets)
+                    ', '.join(f'length({t})' for t in param.targets)
                 )
             )
     return '\n'.join(
