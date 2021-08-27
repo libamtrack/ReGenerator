@@ -236,6 +236,17 @@ def generate_external_call(func_name: str,
                            params_list: list[Parameter],
                            method: Literal['.C', '.Call'],
                            library_name: str = None) -> str:
+    """
+    Creates a call to .C or .Call with appropriate name and parameters.
+    If library_name is omitted, creates a wrapper that looks everywhere for the function name.
+    If method is .Call, it will call the C wrapper to func_name.
+
+    :param func_name: name of the function
+    :param params_list: list of the function's parameters
+    :param method: whether to create a .C or a .Call wrapper
+    :param library_name: where the call should look for the function
+    :return: full call to .C/.Call
+    """
     if method == '.Call':
         func_name += '_wrapper'
     ret = [method, '("', func_name, '"']
@@ -425,6 +436,15 @@ def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> s
 def create_wrappers_for_header_file(path: str,
                                     out_dir: str,
                                     namespace: Collection[str] = None):
+    """
+    Reads a given header file and creates R and (eventually) C wrappers
+    for the functions defined inside.
+
+    :param path: path to the C header file
+    :param out_dir: where to create files with wrappers
+    :param namespace: functions for which we want wrappers to be created
+    :return:
+    """
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     r_out_path = Path(out_dir, Path(path).name.replace('.h', '.R'))
     c_out_path = Path(out_dir, Path(path).name.replace('.h', '_wrappers.c'))
@@ -441,12 +461,14 @@ def create_wrappers_for_header_file(path: str,
                     c_wrapper = ''
                     ret.add(name)
                 elif func['rtnType'] != 'void':  # create a .Call/.External wrapper
-                    warnings.warn('Generating .Call wrappers is not yet fully supported')
+                    message = 'Generating .Call wrappers is not yet fully supported'
+                    warnings.warn(message)
                     r_wrapper = generate_dot_Call_wrapper(name, params)
                     c_wrapper = ''
                     ret.add(name)
                 else:  # void func with no in params - nothing to create a wrapper for
-                    warnings.warn()
+                    message = 'void function with no out parameter won\'t create a wrapper'
+                    warnings.warn(message)
                     r_wrapper = c_wrapper = ''
 
                 r_wrappers.append(r_wrapper)
