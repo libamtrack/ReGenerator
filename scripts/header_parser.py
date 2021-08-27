@@ -88,7 +88,7 @@ import warnings
 from sys import stderr
 from pathlib import Path
 from collections.abc import Collection
-from typing import Union
+from typing import Union, Literal
 
 from CppHeaderParser import CppHeader, CppMethod, CppVariable
 
@@ -172,13 +172,13 @@ class Parameter:
         return f'\t{self.name} <- as.{self.type}({self.name})'
 
 
-def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, list[Parameter], int]:
+def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, list[Parameter]]:
     """
     Extracts the name and parameters from a given CppMethod object
 
     :param fun: A CppMethod extracted by robotpy-cppheaderparser
     :param abs_path: absolute path to the header file
-    :return: tuple containing the function's name, list of its parameters, line number
+    :return: tuple containing the function's name and list of its parameters
     """
     if abs_path is None:
         abs_path = Path(fun['filename']).absolute()
@@ -229,7 +229,22 @@ def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, lis
             ).format(abs_path, line_no, param.size, func_name)
             raise ValueError(message) from e
 
-    return func_name, params_list, line_no
+    return func_name, params_list
+
+
+def generate_external_call(func_name: str,
+                           params_list: list[Parameter],
+                           method: Literal['.C', '.Call'],
+                           library_name: str = None) -> str:
+    if method == '.Call':
+        func_name += '_wrapper'
+    ret = [method, '("', func_name, '"']
+    if len(params_list) > 0:
+        ret.append(', ' + ', '.join(param.name for param in params_list))
+    if library_name is not None:
+        ret.append(f'PACKAGE = "{library_name}"')
+    ret.append(')')
+    return ''.join(ret)
 
 
 def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
@@ -274,12 +289,14 @@ def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
     center = ['){']
     ending = ['\treturn(AUTO_RETVAL)', '}']
     wrapper_params = []
-    call_proper = f'\tAUTO_RET_PARAMS <- .C("{func_name}", '
-    call_params = []
+    call_proper = [f'''\tAUTO_RET_PARAMS <- {generate_external_call(
+        func_name, params_list, '.C'
+    )}''']
     before_call = []
     after_call = []
 
     size_parameters = list(filter(Parameter.is_size, params_list))
+    out_params = list(filter(Parameter.is_out, params_list))
 
     for param in size_parameters:
         before_call.append(
@@ -291,11 +308,10 @@ def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
         )
 
     for param in params_list:
-        call_params.append(param.name)
         if 'in' in param.mode:
             wrapper_params.append('\t' + param.name)
             before_call.append(param.conversion)
-            if isinstance(param.size, int):
+            if param.size is not None:
                 before_call.append(
                     f'\tstopifnot(length({param.name}) >= {param.size})'
                 )
@@ -310,7 +326,6 @@ def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
                 f'\t{param.name} <- AUTO_RET_PARAMS${param.name}'
             )
 
-    call_proper = call_proper + ', '.join(call_params) + ')'
     if len(out_params) == 1:
         after_call.append(f'\tAUTO_RETVAL <- {out_params[0].name}')
     else:
@@ -319,13 +334,52 @@ def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
             .format(",".join([f'"{p.name}" = {p.name}' for p in out_params]))
         )
 
-    return '\n'.join(signature
-                     + [',\n'.join(wrapper_params)]
-                     + center
-                     + before_call
-                     + [call_proper]
-                     + after_call
-                     + ending)
+    return '\n'.join(
+        signature
+        + [',\n'.join(wrapper_params)]
+        + center
+        + before_call
+        + call_proper
+        + after_call
+        + ending
+    )
+
+
+def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> str:
+    wrapper_name = func_name.replace('_', '.')
+    signature = [f'{wrapper_name} <- function(']
+    wrapper_params = []
+    center = ['){']
+    call_proper = ['\t'+generate_external_call(func_name, params_list, '.Call'), '}']
+    size_derivations = []
+    size_checks = []
+    type_conversions = []
+    sized_parameters = set(filter(Parameter.is_array, params_list))
+    lengths = set(filter(Parameter.is_size, params_list))
+    for param in params_list:
+        if param not in lengths:
+            wrapper_params.append('\t' + param.name)
+            if param in sized_parameters:
+                size_checks.append(
+                    f'\tstopifnot(length({param.name}) >= {param.size})'
+                )
+            type_conversions.append(param.conversion)
+        else:
+            size_derivations.append(
+                '{} <- min({})'.format(
+                    param.name,
+                    ','.join(f'length({t})' for t in param.targets)
+                )
+            )
+    return '\n'.join(
+        signature
+        + wrapper_params
+        + center
+        + type_conversions
+        + size_derivations
+        + size_checks
+        + call_proper
+    )
 
 
 def create_wrappers_for_header_file(path: str,
@@ -336,17 +390,25 @@ def create_wrappers_for_header_file(path: str,
     c_out_path = Path(out_dir, Path(path).name.replace('.h', '_wrappers.c'))
     r_wrappers = []
     c_wrappers = []
+    ret = set()
     for func in extract_functions_from_file(path):
         absolute_path = Path(path).absolute()
-        name, params, _ = parse_function_info(func, absolute_path)
+        name, params = parse_function_info(func, absolute_path)
         if namespace is None or name in namespace:
             try:
                 if sum(map(Parameter.is_out, params)) > 0:  # create a .C wrapper if there are output parameters
                     r_wrapper = create_dot_C_wrapper(name, params)
                     c_wrapper = ''
-                else:  # create a .Call/.External wrapper
+                    ret.add(name)
+                elif func['rtnType'] != 'void':  # create a .Call/.External wrapper
                     warnings.warn('Generating .Call wrappers is not yet fully supported')
+                    r_wrapper = generate_dot_Call_wrapper(name, params)
+                    c_wrapper = ''
+                    ret.add(name)
+                else:  # void func with no in params - nothing to create a wrapper for
+                    warnings.warn()
                     r_wrapper = c_wrapper = ''
+
                 r_wrappers.append(r_wrapper)
                 c_wrappers.append(c_wrapper)
             except Exception as e:
@@ -367,6 +429,7 @@ def create_wrappers_for_header_file(path: str,
                 print('\n\n\n'.join(filter(None, c_wrappers)), file=fout)
         except IOError as e:
             print(e, file=stderr)
+    return ret
 
 
 def read_namespace(path: str) -> Union[tuple[None, None], tuple[set[str], set[str]]]:
