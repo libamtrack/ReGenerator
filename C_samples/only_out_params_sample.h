@@ -3,13 +3,15 @@
 
 /**
  * Prints new line characters on console.
+ * To param_one is assigned a constant value: 10.
  * 
  * @param[out] param_one first param
  */
 void one_out_param_no_return_function(int* param_one);
 
 /**
- * This functions always returns -1
+ * This functions always returns -1.
+ * To param_one is assigned a constant value: 10.
  *
  * @param[out] param_one first param
  *
@@ -18,7 +20,8 @@ void one_out_param_no_return_function(int* param_one);
 int one_out_param_int_return_function(int* param_one);
 
 /**
- * This functions always returns 10
+ * This functions always returns 10.
+ * To param_one is assigned a constant value: 10.
  *
  * @param[out] param_one first param
  *
@@ -27,7 +30,8 @@ int one_out_param_int_return_function(int* param_one);
 unsigned int one_out_param_unsigned_int_return_function(int* param_one);
 
 /**
- * This functions always returns 1.2
+ * This functions always returns 1.2.
+ * To param_one is assigned a constant value: 10.
  *
  * @param[out] param_one first param
  *
@@ -36,7 +40,8 @@ unsigned int one_out_param_unsigned_int_return_function(int* param_one);
 float one_out_param_float_return_function(int* param_one);
 
 /**
- * This functions always returns 0.5
+ * This functions always returns 0.5.
+ * To param_one is assigned a constant value: 10.
  *
  * @param[out] param_one first param
  *
@@ -45,7 +50,8 @@ float one_out_param_float_return_function(int* param_one);
 double one_out_param_double_return_function(int* param_one);
 
 /**
- * This functions always returns true
+ * This functions always returns true.
+ * To param_one is assigned a constant value: 10.
  *
  * @param[out] param_one first param
  *

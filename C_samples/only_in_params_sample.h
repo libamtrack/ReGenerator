@@ -1,6 +1,8 @@
 #ifndef __ONLY_IN_PARAMS__
 #define __ONLY_IN_PARAMS__
 
+// TODO: update descriptions
+
 /**
  * Prints new line characters on console.
  * 
@@ -9,47 +11,47 @@
 void one_in_param_no_return_function(int param_one);
 
 /**
- * This functions always returns -1
+ * This functions returns param_one value multiplied by -1
  *
  * @param[in] param_one first param
  *
- * @return status code
+ * @return param_one value multiplied by -1
  */
 int one_in_param_int_return_function(int param_one);
 
 /**
- * This functions always returns 10
+ * This functions returns param_one value multiplied by 10
  *
  * @param[in] param_one first param
  *
- * @return status code
+ * @return param_one value multiplied by 10
  */
 unsigned int one_in_param_unsigned_int_return_function(int param_one);
 
 /**
- * This functions always returns 1.2
+ * This functions returns param_one value multiplied by 1.2
  *
  * @param[in] param_one first param
  *
- * @return dummy number
+ * @return param_one value multiplied by 1.2
  */
 float one_in_param_float_return_function(int param_one);
 
 /**
- * This functions always returns 0.5
+ * This functions returns param_one value multiplied by 0.5
  *
  * @param[in] param_one first param
  *
- * @return dummy number
+ * @return param_one value multiplied by 0.5
  */
 double one_in_param_double_return_function(int param_one);
 
 /**
- * This functions always returns true
+ * This functions checks if param_one is greater that 10.
  *
  * @param[in] param_one first param
  *
- * @return status code
+ * @return boolean value telling if param_one is greater that 10.
  */
 bool one_in_param_bool_return_function(int param_one);
 
