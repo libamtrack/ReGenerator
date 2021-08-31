@@ -32,7 +32,7 @@ False
 >>> m.group('name')
 'res1'
 >>> m.group('desc')
-'result of the function'
+'    result of the function'
 
 >>> m = param_regex.fullmatch('\\param[in,out] temp__    temperature '
 ... 'measurements before and afer (array of length 14)')
@@ -43,7 +43,7 @@ False
 >>> m.group('name')
 'temp__'
 >>> m.group('desc')
-'temperature measurements before and afer (array of length 14)'
+'    temperature measurements before and afer (array of length 14)'
 
 >>> m = param_regex.fullmatch('@param names    names of searched people (array of size number_of_people)')
 >>> m is None
@@ -53,7 +53,7 @@ False
 >>> m.group('name')
 'names'
 >>> m.group('desc')
-'names of searched people (array of size number_of_people)'
+'    names of searched people (array of size number_of_people)'
 
 >>> m = param_regex.fullmatch('@param 5tomatoes')
 >>> m is None
@@ -83,12 +83,12 @@ True
 
 import re
 import argparse
-import ctypes  # used in eval
+import ctypes  # used by eval
 import warnings
 from sys import stderr
 from pathlib import Path
 from collections.abc import Collection
-from typing import Union
+from typing import Union, Literal
 
 from CppHeaderParser import CppHeader, CppMethod, CppVariable
 
@@ -104,8 +104,7 @@ param_regex = re.compile(
     (?P<mode>(\[(in|out|in,\s*out)])?)  # parameter may be in, out, both or unspecified (in by default)
     \s*
     (?P<name>[a-z_][a-z0-9_]*)       # won't match C99's unicode names
-    \s*
-    (?P<desc>.*)$                    # also capture the description
+    (?P<desc>.*?)$                    # also capture the description
     """, re.VERBOSE | re.MULTILINE | re.IGNORECASE
 )
 
@@ -138,7 +137,7 @@ class Parameter:
         self.mode = mode[1:-1].lower() if mode != '' else 'in'
         self.size = size
         self.targets = []  # only used with size parameters
-        self.description = description
+        self.description = description.strip()
         if size:
             try:
                 if size.startswith('0x'):
@@ -159,23 +158,46 @@ class Parameter:
     def is_out(self):
         return 'out' in self.mode
 
+    def is_in(self):
+        return 'in' in self.mode or self.mode == 'size'
+
+    def is_size(self):
+        return self.mode == 'size'
+
+    def is_array(self):
+        return self.size is not None
+
     @property
     def conversion(self):
         return f'\t{self.name} <- as.{self.type}({self.name})'
 
 
-def parse_function_info(fun: CppMethod) -> tuple[str, list[Parameter]]:
+def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, list[Parameter]]:
     """
     Extracts the name and parameters from a given CppMethod object
 
     :param fun: A CppMethod extracted by robotpy-cppheaderparser
-    :return:
+    :param abs_path: absolute path to the header file
+    :return: tuple containing the function's name and list of its parameters
     """
+    if abs_path is None:
+        abs_path = Path(fun['filename']).absolute()
     func_name = fun['name']
+    line_no = fun['line_number']
     params_list = []
+    params_descriptions = list(param_regex.finditer(fun['doxygen']))
+
+    if len(params_descriptions) != len(fun['parameters']):
+        message = (
+            '{}:{}: Cannot create wrapper for function {}: docstring '
+            'defines {} parameters while function declaration defines {}'
+        ).format(abs_path, line_no, func_name,
+                 len(params_descriptions), len(fun['parameters']))
+        raise ValueError(message)
+
     for param_desc, param_doxy, i in zip(
             fun['parameters'],
-            param_regex.finditer(fun['doxygen']),
+            params_descriptions,
             range(len(fun['parameters']))
     ):
         param_mode = param_doxy.group('mode')
@@ -188,152 +210,267 @@ def parse_function_info(fun: CppMethod) -> tuple[str, list[Parameter]]:
             ))
         except ValueError as e:
             message = (
-                'Cannot create wrapper for function '
-                '{} (defined in {})'
-            ).format(fun["name"], fun["filename"])
+                '{}:{}: Cannot create wrapper for function '
+                '{}: KeyError "{}"'
+            ).format(abs_path, line_no, func_name, e)
             raise ValueError(message) from e
+
+    params_dict: dict[str, Parameter] = {param.name: param for param in params_list}
+    for param in params_list:
+        if not isinstance(param.size, str):
+            continue  # only looping over parameters that have a variable size
+        try:
+            if params_dict[param.size].is_in():
+                params_dict[param.size].mode = 'size'
+                params_dict[param.size].targets.append(param.name)
+        except KeyError as e:
+            message = (
+                '{}:{}: {} is not a parameter of {}'
+            ).format(abs_path, line_no, param.size, func_name)
+            raise ValueError(message) from e
+
     return func_name, params_list
+
+
+def generate_external_call(func_name: str,
+                           params_list: list[Parameter],
+                           method: Literal['.C', '.Call'],
+                           library_name: str = None) -> str:
+    """
+    Creates a call to .C or .Call with appropriate name and parameters.
+    If library_name is omitted, creates a wrapper that looks everywhere for the function name.
+    If method is .Call, it will call the C wrapper to func_name.
+
+    :param func_name: name of the function
+    :param params_list: list of the function's parameters
+    :param method: whether to create a .C or a .Call wrapper
+    :param library_name: where the call should look for the function
+    :return: full call to .C/.Call
+    """
+    if method == '.Call':
+        func_name += '_wrapper'
+    ret = [method, '("', func_name, '"']
+    if len(params_list) > 0:
+        ret.append(', ' + ', '.join(param.name for param in params_list))
+    if library_name is not None:
+        ret.append(f'PACKAGE = "{library_name}"')
+    ret.append(')')
+    return ''.join(ret)
 
 
 def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
     """
-    Uses a function as parsed by robotpy-cppheaderparser together with its
-    doxygen comment in order to create an R wrapper
+    Uses a function name and parameters list returned by parse_function_info
+    to create an R wrapper with its .C function
 
     Example: the function defined as follows
     ::
         /**
-         * @brief description
-         * @param[in] param1
-         * @param[in,out] param2 array of length param1
-         * @param[out] param3 array of length param1
+         * calculates time step for balancing pressure in pipes
+         * @param         n         number of segments
+         * @param         dt        time step size
+         * @param[in]     widths    widths of pipe segments (array of length n)
+         * @param[in,out] pressures array of length n, pressures before and after
+         * @param[out]    dp        pressure changes (array of size n)
          */
-        int some_func(const int param1, int *param2, float *param3);
+        int pressure_step(const int n, const float dt, const float *widths, float *pressures, float *dp);
 
     Will produce a wrapper like this
     ::
-        some.func <- function(param2){
-          param1 <- min(length(param2))
-          param2 <- as.integer(param2)
-          param3 <- vector(mode="double", length=param1)
-          AUTO_RET_PARAMS <- .C("some_func", param1, param2, param3)
-          param2 <- AUTO_RET_PARAMS$param2
-          param3 <- AUTO_RET_PARAMS$param3
-          AUTO_RETVAL <- list("param2" = param2, "param3" = param3)
-          return(AUTO_RETVAL)
+        pressure.step <- function(
+            dt,
+            widths,
+            pressures
+        ){
+            n <- min(length(widths), length(pressures), length(dp))
+            dt <- as.single(dt)
+            widths <- as.single(widths)
+            stopifnot(length(widths) >= n)
+            pressures <- as.single(pressures)
+            stopifnot(length(pressures) >= n)
+            dp <- single(n)
+            AUTO_RET_PARAMS <- .C("pressure_step", n, dt, widths, pressures, dp)
+            pressures <- AUTO_RET_PARAMS$pressures
+            dp <- AUTO_RET_PARAMS$dp
+            AUTO_RETVAL <- list("pressures" = pressures, "dp" = dp)
+            return(AUTO_RETVAL)
         }
-
-    Node that param2's mode is "double", as R doesn't support single precision
 
     :param func_name: The name of the C function
     :type func_name: str
     :param params_list: List of Parameter objects retrieved from parse_function_info
     :return: The R wrapper for the provided C function
     :rtype: str
-    :raise: :py:class:`ValueError` when the function can't be parsed
     """
     wrapper_name = func_name.replace('_', '.')
     signature = [f'{wrapper_name} <- function(']
     center = ['){']
     ending = ['\treturn(AUTO_RETVAL)', '}']
-    parameter_list = []
-    call_proper = f'\tAUTO_RET_PARAMS <- .C("{func_name}", '
-    call_params = []
+    wrapper_params = []
+    call_proper = [f'''\tAUTO_RET_PARAMS <- {generate_external_call(
+        func_name, params_list, '.C'
+    )}''']
     before_call = []
     after_call = []
 
-    parameters: dict[str, Parameter] = {param.name: param for param in params_list}
-    size_parameters = {param for param in params_list if isinstance(param.size, str)}
-
-    out_params = [p for p in params_list if p.mode in ['out', 'in,out']]
-    # if len(out_params) == 0:
-    #     message = (
-    #         '{} appears to have no output parameters'
-    #         .format(func_name)
-    #     )
-    #     warnings.warn(message)
-    #     return ''  # no output parameters, no point in creating a wrapper
-    for param in size_parameters:
-        try:
-            if parameters[param].mode == 'in':
-                parameters[param].mode = 'size'
-        except KeyError as e:
-            message = (
-                '{} is not a parameter of {}'
-                .format(param, func_name)
-            )
-            raise ValueError(message) from e
-
-    for param in parameters.values():
-        if isinstance(param.size, str):
-            if param.mode in ['in', 'in,out']:
-                parameters[param.size].targets.append(param)
+    size_parameters = list(filter(Parameter.is_size, params_list))
+    out_params = list(filter(Parameter.is_out, params_list))
 
     for param in size_parameters:
         before_call.append(
             '\t{} <- min({})'
-            .format(param,
-                    ",".join([f"length({target.name})"
+            .format(param.name,
+                    ", ".join([f"length({target})"
                               for target
-                              in parameters[param].targets]))
+                              in param.targets]))
         )
 
     for param in params_list:
-        call_params.append(param.name)
-        if param.mode in ['in', 'in,out']:
-            parameter_list.append('\t' + param.name)
+        if 'in' in param.mode:
+            wrapper_params.append('\t' + param.name)
             before_call.append(param.conversion)
-            if isinstance(param.size, int):
+            if param.size is not None:
                 before_call.append(
                     f'\tstopifnot(length({param.name}) >= {param.size})'
                 )
-        if param.mode in ['out', 'in,out']:
+        if param.is_out():
             if param.mode == 'out':
                 before_call.append(
-                    f'\t{param.name} <- vector(mode = "'
-                    f'{"double" if param.type == "single" else param.type}'
-                    f'", length = {param.size if param.size else 1})'
+                    f'\t{param.name} <- {param.type}('
+                    f'{param.size if param.size else 1})'
                 )
             after_call.append(
                 f'\t{param.name} <- AUTO_RET_PARAMS${param.name}'
             )
 
-    call_proper = call_proper + ', '.join(call_params) + ')'
     if len(out_params) == 1:
         after_call.append(f'\tAUTO_RETVAL <- {out_params[0].name}')
     else:
         after_call.append(
             '\tAUTO_RETVAL <- list({})'
-            .format(",".join([f'"{p.name}" = {p.name}' for p in out_params]))
+            .format(", ".join([f'"{p.name}" = {p.name}' for p in out_params]))
         )
 
-    return '\n'.join(signature
-                     + [',\n'.join(parameter_list)]
-                     + center
-                     + before_call
-                     + [call_proper]
-                     + after_call
-                     + ending)
+    return '\n'.join(
+        signature
+        + [',\n'.join(wrapper_params)]
+        + center
+        + before_call
+        + call_proper
+        + after_call
+        + ending
+    )
+
+
+def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> str:
+    """
+    Uses a function name and parameters list returned by parse_function_info
+    to create an R wrapper with its .Call function
+
+    Example: the function defined as follows
+    ::
+        /**
+         * calculates time step for balancing pressure in pipes
+         * @param n  number of items
+         * @param xs numbers to take mean of (array of length n)
+         * @return harmonic mean of xs
+         */
+        double harmonic_mean(const int n, const double *xs);
+
+    Will produce a wrapper like this
+    ::
+        harmonic.mean <- function(
+            xs
+        ){
+            xs <- as.double(xs)
+            n <- min(length(xs))
+            stopifnot(length(xs) >= n)
+            return(.Call("harmonic_mean_wrapper", n, xs))
+        }
+
+    :param func_name: The name of the C function
+    :type func_name: str
+    :param params_list: List of Parameter objects retrieved from parse_function_info
+    :return: The R wrapper for the provided C function
+    :rtype: str
+    """
+    wrapper_name = func_name.replace('_', '.')
+    signature = [f'{wrapper_name} <- function(']
+    wrapper_params = []
+    center = ['){']
+    call_proper = [
+        f'\treturn({generate_external_call(func_name, params_list, ".Call")})',
+        '}'
+    ]
+    size_derivations = []
+    size_checks = []
+    type_conversions = []
+    sized_parameters = set(filter(Parameter.is_array, params_list))
+    lengths = set(filter(Parameter.is_size, params_list))
+    for param in params_list:
+        if param not in lengths:
+            wrapper_params.append('\t' + param.name)
+            if param in sized_parameters:
+                size_checks.append(
+                    f'\tstopifnot(length({param.name}) >= {param.size})'
+                )
+            type_conversions.append(param.conversion)
+        else:
+            size_derivations.append(
+                '\t{} <- min({})'.format(
+                    param.name,
+                    ', '.join(f'length({t})' for t in param.targets)
+                )
+            )
+    return '\n'.join(
+        signature
+        + wrapper_params
+        + center
+        + type_conversions
+        + size_derivations
+        + size_checks
+        + call_proper
+    )
 
 
 def create_wrappers_for_header_file(path: str,
                                     out_dir: str,
                                     namespace: Collection[str] = None):
+    """
+    Reads a given header file and creates R and (eventually) C wrappers
+    for the functions defined inside.
+
+    :param path: path to the C header file
+    :param out_dir: where to create files with wrappers
+    :param namespace: functions for which we want wrappers to be created
+    :return:
+    """
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     r_out_path = Path(out_dir, Path(path).name.replace('.h', '.R'))
     c_out_path = Path(out_dir, Path(path).name.replace('.h', '_wrappers.c'))
     r_wrappers = []
     c_wrappers = []
+    ret = set()
     for func in extract_functions_from_file(path):
-        name, params = parse_function_info(func)
+        absolute_path = Path(path).absolute()
+        name, params = parse_function_info(func, absolute_path)
         if namespace is None or name in namespace:
             try:
                 if sum(map(Parameter.is_out, params)) > 0:  # create a .C wrapper if there are output parameters
                     r_wrapper = create_dot_C_wrapper(name, params)
                     c_wrapper = ''
-                else:  # create a .Call/.External wrapper
-                    warnings.warn('Generating .Call wrappers is not yet supported')
+                    ret.add(name)
+                elif func['rtnType'] != 'void':  # create a .Call/.External wrapper
+                    message = 'Generating .Call wrappers is not yet fully supported'
+                    warnings.warn(message)
+                    r_wrapper = generate_dot_Call_wrapper(name, params)
+                    c_wrapper = ''
+                    ret.add(name)
+                else:  # void func with no in params - nothing to create a wrapper for
+                    message = 'void function with no out parameter won\'t create a wrapper'
+                    warnings.warn(message)
                     r_wrapper = c_wrapper = ''
+
                 r_wrappers.append(r_wrapper)
                 c_wrappers.append(c_wrapper)
             except Exception as e:
@@ -350,10 +487,11 @@ def create_wrappers_for_header_file(path: str,
     if any(c_wrappers):
         try:
             with open(c_out_path, 'w', encoding='utf-8') as fout:
-                print('#include <Rinternals.h>', end='\n\n\n')
+                print('#include <Rinternals.h>', end='\n\n\n', file=fout)
                 print('\n\n\n'.join(filter(None, c_wrappers)), file=fout)
         except IOError as e:
             print(e, file=stderr)
+    return ret
 
 
 def read_namespace(path: str) -> Union[tuple[None, None], tuple[set[str], set[str]]]:

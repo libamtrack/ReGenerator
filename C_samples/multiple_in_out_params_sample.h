@@ -111,7 +111,7 @@ void two_in_two_out_params_no_return_function(int param_in_one, char param_in_tw
 int two_in_two_out_params_int_return_function(int param_in_one, char param_in_two, double* param_out_one, float* param_out_two);
 
 /**
- * This functions returns sum of param_in_one and param_in_two multiplied by 10.
+ * This functions returns absolute value of sum of param_in_one and param_in_two multiplied by 10.
  * To param_out_one is assigned value of param_in_one multiplied by 10 plus integer value of param_in_two.
  * To param_out_two is assigned value of param_in_one divided by 10 plus integer value of param_in_two.
  *
@@ -120,7 +120,7 @@ int two_in_two_out_params_int_return_function(int param_in_one, char param_in_tw
  * @param[out] param_out_one first out param
  * @param[out] param_out_two second out param
  *
- * @return sum of param_in_one and param_in_two multiplied by 10
+ * @return absolute value of sum of param_in_one and param_in_two multiplied by 10
  */
 unsigned int two_in_two_out_params_unsigned_int_return_function(int param_in_one, char param_in_two, double* param_out_one, float* param_out_two);
 
@@ -185,7 +185,7 @@ bool two_in_two_out_params_bool_return_function(int param_in_one, char param_in_
 void two_in_three_out_params_no_return_function(    int param_in_one, 
                                                     char param_in_two, 
                                                     double* param_out_one, 
-                                                    float param_out_two, 
+                                                    float* param_out_two, 
                                                     unsigned int* param_out_three);
 
 /**
@@ -209,7 +209,7 @@ int two_in_three_out_params_int_return_function(    int param_in_one,
                                                     unsigned int* param_out_three);
 
 /**
- * This functions returns sum of param_in_one and param_in_two multiplied by 10.
+ * This functions returns absolute value of sum of param_in_one and param_in_two multiplied by 10.
  * To param_out_one is assigned value of param_in_one multiplied by 10 plus integer value of param_in_two.
  * To param_out_two is assigned value of param_in_one divided by 10 plus integer value of param_in_two.
  * To param_out_three is assigned value of param_in_one rounded to integer and divided by 2 plus integer value of param_in_two.
@@ -220,7 +220,7 @@ int two_in_three_out_params_int_return_function(    int param_in_one,
  * @param[out] param_out_two second out param
  * @param[out] param_out_three third out param
  *
- * @return sum of param_in_one and param_in_two multiplied by 10.
+ * @return absolute value of sum of param_in_one and param_in_two multiplied by 10.
  */
 unsigned int two_in_three_out_params_unsigned_int_return_function(  int param_in_one, 
                                                                     char param_in_two,
