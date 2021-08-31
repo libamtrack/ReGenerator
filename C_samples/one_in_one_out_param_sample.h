@@ -11,7 +11,8 @@
 void one_in_one_out_param_no_return_function(int param_in, double* param_out);
 
 /**
- * This functions always returns -1
+ * This functions returns param_in multiplied by -1. 
+ * Param_out is set to param_in multiplied by 1.5.
  *
  * @param[in] param_in first param
  * @param[out] param_out second param
@@ -21,7 +22,8 @@ void one_in_one_out_param_no_return_function(int param_in, double* param_out);
 int one_in_one_out_param_int_return_function(int param_in, double* param_out);
 
 /**
- * This functions always returns 10
+ * This functions always param_in multiplied by 10. 
+ * Param_out is set to param_in multiplied by 1.5.
  *
  * @param[in] param_in first param
  * @param[out] param_out second param
@@ -31,7 +33,8 @@ int one_in_one_out_param_int_return_function(int param_in, double* param_out);
 unsigned int one_in_one_out_param_unsigned_int_return_function(int param_in, double* param_out);
 
 /**
- * This functions always returns 1.2
+ * This functions returns param_in multiplied by 1.2. 
+ * Param_out is set to param_in multiplied by 1.5.
  *
  * @param[in] param_in first param
  * @param[out] param_out second param
@@ -41,7 +44,8 @@ unsigned int one_in_one_out_param_unsigned_int_return_function(int param_in, dou
 float one_in_one_out_param_float_return_function(int param_in, double* param_out);
 
 /**
- * This functions always returns 0.5
+ * This functions returns param_in multiplied by 0.5. 
+ * Param_out is set to param_in multiplied by 1.5.
  *
  * @param[in] param_in first param
  * @param[out] param_out second param
@@ -51,7 +55,8 @@ float one_in_one_out_param_float_return_function(int param_in, double* param_out
 double one_in_one_out_param_double_return_function(int param_in, double* param_out);
 
 /**
- * This functions always returns true
+ * This functions checks if param_in is greater than 10. 
+ * Param out is set to param_in multiplied by 1.5.
  *
  * @param[in] param_in first param
  * @param[out] param_out second param
