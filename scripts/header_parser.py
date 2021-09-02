@@ -475,10 +475,10 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
     c_wrappers = []
     ret = set()
     for func in extract_functions_from_file(path):
-        absolute_path = Path(path).absolute()
-        name, params = parse_function_info(func, absolute_path)
-        if namespace is None or name in namespace:
-            try:
+        try:
+            absolute_path = Path(path).absolute()
+            name, params = parse_function_info(func, absolute_path)
+            if namespace is None or name in namespace:
                 if sum(map(Parameter.is_out, params)) > 0:  # create a .C wrapper if there are output parameters
                     r_wrapper = create_dot_C_wrapper(name, params)
                     c_wrapper = ''
@@ -496,8 +496,8 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
 
                 r_wrappers.append(r_wrapper)
                 c_wrappers.append(c_wrapper)
-            except Exception as e:
-                print(e, file=stderr)
+        except Exception as e:
+            print(e, file=stderr)
 
     if any(r_wrappers):  # only create the file if there's anything to write
         try:
