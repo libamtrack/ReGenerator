@@ -85,8 +85,10 @@ import re
 import argparse
 import ctypes  # used by eval
 import warnings
+from os import PathLike
+from os.path import commonpath
 from sys import stderr
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from collections.abc import Collection
 from typing import Union, Literal
 
@@ -433,13 +435,34 @@ def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> s
     )
 
 
-def create_wrappers_for_header_file(path: str,
+def generate_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
+    """
+    TODO
+    :param func_name:
+    :param params_list:
+    :return:
+    """
+    signature = [f'SEXP {func_name}_wrapper(']
+    middle = ['){', '\tSEXP RETVAL;']
+    end = ['\treturn RETVAL;', '}']
+    for param in params_list:
+        signature.append(f'\tSEXP p_{param.name},')
+    return '\n'.join(
+        signature
+        + middle
+        + end
+    )
+
+
+def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                                     out_dir: str,
+                                    include_dir: str,
                                     namespace: Collection[str] = None):
     """
     Reads a given header file and creates R and (eventually) C wrappers
     for the functions defined inside.
 
+    :param include_dir: root directory for all header files
     :param path: path to the C header file
     :param out_dir: where to create files with wrappers
     :param namespace: functions for which we want wrappers to be created
@@ -464,7 +487,7 @@ def create_wrappers_for_header_file(path: str,
                     message = 'Generating .Call wrappers is not yet fully supported'
                     warnings.warn(message)
                     r_wrapper = generate_dot_Call_wrapper(name, params)
-                    c_wrapper = ''
+                    c_wrapper = generate_C_wrapper(name, params)
                     ret.add(name)
                 else:  # void func with no in params - nothing to create a wrapper for
                     message = 'void function with no out parameter won\'t create a wrapper'
@@ -487,7 +510,9 @@ def create_wrappers_for_header_file(path: str,
     if any(c_wrappers):
         try:
             with open(c_out_path, 'w', encoding='utf-8') as fout:
-                print('#include <Rinternals.h>', end='\n\n\n', file=fout)
+                print('#include <Rinternals.h>', file=fout)
+                c_include_filename = PurePosixPath(path).relative_to(PurePosixPath(include_dir))
+                print(f'#include "{c_include_filename}"', end='\n\n\n', file=fout)
                 print('\n\n\n'.join(filter(None, c_wrappers)), file=fout)
         except IOError as e:
             print(e, file=stderr)
@@ -541,8 +566,15 @@ def main():
                         default='./NAMESPACE')
     args = parser.parse_args()
     _, gen_wrapper = read_namespace(args.namespace)
-    for infile in args.infile:
-        create_wrappers_for_header_file(infile, args.out_dir, gen_wrapper)
+
+    infiles = [Path(p).absolute() for p in args.infile]
+    if len(infiles) > 1:
+        include_dir = Path(commonpath(infiles))
+    else:
+        include_dir = infiles[0].parent
+
+    for infile in infiles:
+        create_wrappers_for_header_file(infile, args.out_dir, include_dir, gen_wrapper)
 
 
 if __name__ == '__main__':
