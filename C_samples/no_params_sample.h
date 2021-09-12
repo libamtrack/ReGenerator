@@ -1,6 +1,8 @@
 #ifndef __NO_PARAMS__
 #define __NO_PARAMS__
 
+#include <stdbool.h>
+
 /**
  * Prints new line characters on console.
  * 

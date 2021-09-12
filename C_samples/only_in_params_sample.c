@@ -1,11 +1,10 @@
 #include <stdio.h>
-#include <stdbool.h>
 
 #include "only_in_params_sample.h"
 
 void one_in_param_no_return_function(int param_one)
 {
-    printf("\r\n");
+    printf("%d\r\n", param_one);
 }
 
 

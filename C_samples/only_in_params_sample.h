@@ -1,10 +1,10 @@
 #ifndef __ONLY_IN_PARAMS__
 #define __ONLY_IN_PARAMS__
 
-// TODO: update descriptions
+#include <stdbool.h>
 
 /**
- * Prints new line characters on console.
+ * Prints param_one value on console.
  * 
  * @param[in] param_one first param
  */
