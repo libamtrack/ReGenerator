@@ -9,9 +9,9 @@
 
 void one_in_two_out_params_no_return_function(int param_in, double* param_out_one, float* param_out_two)
 {
+    printf("%d, %f, %f\r\n", param_in, *param_out_one, *param_out_two);
     *param_out_one = 10.0 * param_in;
     *param_out_two = param_in / 10.0;
-    printf("\r\n");
 }
 
 int one_in_two_out_params_int_return_function(int param_in, double* param_out_one, float* param_out_two)
@@ -54,9 +54,9 @@ bool one_in_two_out_params_bool_return_function(int param_in, double* param_out_
 
 void two_in_two_out_params_no_return_function(int param_in_one, char param_in_two, double* param_out_one, float* param_out_two)
 {
+    printf("%d, %c, %f, %f\r\n", param_in_one, param_in_two, *param_out_one, *param_out_two);
     *param_out_one = 10.0 * param_in_one + (unsigned int)param_in_two;
     *param_out_two = param_in_one / 10.0 + (unsigned int)param_in_two;
-    printf("\r\n");
 }
 
 int two_in_two_out_params_int_return_function(int param_in_one, char param_in_two, double* param_out_one, float* param_out_two)
@@ -103,10 +103,10 @@ void two_in_three_out_params_no_return_function(    int param_in_one,
                                                     float* param_out_two, 
                                                     unsigned int* param_out_three)
 {
+    printf("%d, %c, %f, %f, %u\r\n", param_in_one, param_in_two, *param_out_one, *param_out_two, *param_out_three);
     *param_out_one = 10.0 * param_in_one + (unsigned int)param_in_two;
     *param_out_two = param_in_one / 10.0 + (unsigned int)param_in_two;
     *param_out_three = abs(param_in_one) / 2 + (unsigned int)param_in_two;
-    printf("\r\n");
 }
 
 int two_in_three_out_params_int_return_function(    int param_in_one, 
@@ -179,6 +179,7 @@ void three_in_three_out_params_no_return_function(  int param_in_one,
                                                     float* param_out_two, 
                                                     unsigned int* param_out_three)
 {
+    printf("%d, %c, %u, %f, %f, %u\r\n", param_in_one, param_in_two, param_in_three, *param_out_one, *param_out_two, *param_out_three);
     if (param_in_three)
     {
         *param_out_one = 10.0 * param_in_one + (unsigned int)param_in_two;
@@ -191,7 +192,6 @@ void three_in_three_out_params_no_return_function(  int param_in_one,
         *param_out_two = param_in_one + (unsigned int)param_in_two;
         *param_out_three = abs(param_in_one) + (unsigned int)param_in_two;
     }
-    printf("\r\n");
 }
 
 int three_in_three_out_params_int_return_function(  int param_in_one, 
