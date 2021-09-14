@@ -25,6 +25,10 @@ static double table_sum(double* table, unsigned int length)
 void one_table_in_no_out_params_no_return_function( double* table_param_in_one,
                                                     unsigned int size_param_in_one)
 {
+    for (int i=0;i<size_param_in_one;i++)
+    {
+        printf("%f\r\n", table_param_in_one[i]);
+    }
     return;
 }
 

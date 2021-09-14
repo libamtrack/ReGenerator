@@ -497,7 +497,7 @@ double two_tables_in_one_table_out_params_double_return_function( float* table_p
  * @param[out] table_param_out_one first table out param
  * @param[out] size_param__out_one size of first table out param
  *
- * @return boolean value telling if number of written elements is equalt to size_param_out_one
+ * @return boolean value telling if number of written elements is equal to size_param_out_one
  */
 bool two_tables_in_one_table_out_params_bool_return_function( float* table_param_in_one,
                                                                 unsigned int size_param_in_one,
@@ -613,7 +613,7 @@ double one_table_in_two_tables_out_params_double_return_function( float* table_p
  * @param[out] table_param_in_two second table out param
  * @param[out] size_param_in_two size of second out table param
  *
- * @return boolean value telling if number of written elements is equal to size_param_out_one and size_param_out_two
+ * @return boolean value telling if max number of written elements is equal to size_param_out_one and size_param_out_two
  */
 bool one_table_in_two_tables_out_params_bool_return_function( float* table_param_in_one,
                                                                 unsigned int size_param_in_one,

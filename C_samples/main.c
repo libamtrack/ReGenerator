@@ -450,27 +450,194 @@ void test_three_in_three_out_params_functions(void)
 
 void test_one_table_in_no_out_params_functions(void)
 {
+    double table[10];
 
+    for (int i=0;i<10;i++)
+    {
+        table[i] = i * -15.35;
+    }
+
+    printf("Printing 10 numbers in separete lines with step 1.5:\r\n");
+    one_table_in_no_out_params_no_return_function(table, 10);
+
+    assert(one_table_in_no_out_params_int_return_function(table, 10) == -153);
+    assert(one_table_in_no_out_params_unsigned_int_return_function(table, 10) == 153);
+    assert(one_table_in_no_out_params_float_return_function(table, 5) == -76,75);
+    assert(one_table_in_no_out_params_double_return_function(table, 10) == -153.35);
+    assert(one_table_in_no_out_params_bool_return_function(table, 10) == false);
+    assert(one_table_in_no_out_params_bool_return_function(table, 3) == true);
 }
 
 /* -------------------------------------------------------------------------- */
 
 void test_no_in_one_table_out_params_functions(void)
 {
+    double table[10];
 
+    no_in_one_table_out_params_no_return_function(table, 10);
+
+    for (int i=0;i<10;i++)
+    {
+        assert(table[i] == 10);
+        table[i] = 0.0;
+    }
+
+    assert(no_in_one_table_out_params_int_return_function(table, 10) == -100);
+    
+    for (int i=0;i<10;i++)
+    {
+        assert(table[i] == -10);
+        table[i] = 0.0;
+    }
+
+    assert(one_table_in_no_out_params_unsigned_int_return_function(table, 10) == 100);
+    
+    for (int i=0;i<10;i++)
+    {
+        assert(table[i] == 10);
+        table[i] = 0.0;
+    }
+
+    assert(one_table_in_no_out_params_float_return_function(table, 3) == 30.6);
+
+    for (int i=0;i<3;i++)
+    {
+        assert(table[i] == 10.2);
+        table[i] = 0.0;
+    }
+    assert(table[3] == 0.0);
+
+    assert(one_table_in_no_out_params_double_return_function(table, 10) == 102);
+
+    for (int i=0;i<10;i++)
+    {
+        assert(table[i] == 10.2);
+        table[i] = 0.0;
+    }
+
+    assert(one_table_in_no_out_params_bool_return_function(table, 10) == false);
+
+    for (int i=0;i<10;i++)
+    {
+        assert(table[i] == 10.2);
+        table[i] = 0.0;
+    }
+
+    assert(one_table_in_no_out_params_bool_return_function(table, 3) == true);
+    
+    for (int i=0;i<3;i++)
+    {
+        assert(table[i] == 10.2);
+        table[i] = 0.0;
+    }
+
+    assert(table[3] == 0.0);
 }
 
 /* -------------------------------------------------------------------------- */
 
 void test_one_table_in_one_out_params_functions(void)
 {
+    double table[10];
+    float param_out = 0.0;
 
+    for (int i=0;i<10;i++)
+    {
+        table[i] = 10.2;
+    }
+
+    one_table_in_one_out_param_no_return_function(table, 10, &param_out);
+    assert(param_out == 102);
+    param_out == 0;
+
+    assert(one_table_in_one_out_param_int_return_function(table, 3, &param_out) == 30);
+    assert(param_out == 30);
+    param_out = 0.0;
+
+    assert(one_table_in_one_out_param_unsigned_int_return_function(table, 10, &param_out) == 102);
+    assert(param_out == 102);
+    param_out = 0.0;
+
+    assert(one_table_in_one_out_param_float_return_function(table, 3, &param_out) == 30.6);
+    assert(param_out == 30.6);
+    param_out = 0.0;
+
+    assert(one_table_in_one_out_param_double_return_function(table, 10, &param_out) == 102);
+    assert(param_out == 102);
+    param_out = 0.0;
+
+    assert(one_table_in_one_out_param_bool_return_function(table, 3, &param_out) == false);
+    assert(param_out == 30.6);
+    param_out = 0.0;
+
+    assert(one_table_in_one_out_param_bool_return_function(table, 10, &param_out) == true);
+    assert(param_out == 102);
+    param_out = 0.0;
 }
 
 /* -------------------------------------------------------------------------- */
 
 void test_one_in_one_table_out_params_functions(void)
 {
+    double table[10];
+
+    one_param_in_one_table_out_no_return_function(10.2, table, 10);
+
+    for (int i=0;i<10;i++)
+    {
+        assert(table[i] == 10.2);
+        table[i] = 0.0;
+    }
+
+    assert(one_param_in_one_table_out_params_int_return_function(10.2, table, 10) == -102);
+    
+    for (int i=0;i<10;i++)
+    {
+        assert(table[i] == 10.2);
+        table[i] = 0.0;
+    }
+
+    assert(one_param_in_one_table_out_unsigned_int_return_function(10.25, table, 10) == 102);
+    
+    for (int i=0;i<10;i++)
+    {
+        assert(table[i] == 10.25);
+        table[i] = 0.0;
+    }
+
+    assert(one_param_in_one_table_out_float_return_function(10.2, table, 4) == 40.8);
+    
+    for (int i=0;i<4;i++)
+    {
+        assert(table[i] == 10.25);
+        table[i] = 0.0;
+    }
+    assert(table[4] == 0.0);
+
+    assert(one_param_in_one_table_out_double_return_function(-10.2, table, 10) == -102);
+
+    for (int i=0;i<10;i++)
+    {
+        assert(table[i] == -10.2);
+        table[i] = 0.0;
+    }
+
+    assert(one_param_in_one_table_out_bool_return_function(10.2, table, 10) == false);
+    
+    for (int i=0;i<10;i++)
+    {
+        assert(table[i] == 10.2);
+        table[i] = 0.0;
+    }
+
+    assert(one_param_in_one_table_out_bool_return_function(10.2, table, 4) == true);
+
+    for (int i=0;i<4;i++)
+    {
+        assert(table[i] == 10.2);
+        table[i] = 0.0;
+    }
+    assert(table[4] == 0.0);
 
 }
 
@@ -478,20 +645,245 @@ void test_one_in_one_table_out_params_functions(void)
 
 void test_one_table_in_one_table_out_params_functions(void)
 {
+    double table_in[10];
+    int table_out[10];
 
+    for (int i=0;i<10;i++)
+    {
+        table_in[i] = 10.3;
+    }
+
+    one_table_in_one_table_out_params_no_return_function(table_in, 10, table_out, 10);
+
+    for (int i=0;i<10;i++)
+    {
+        assert(table_out[i] == 10);
+        table_out[i] = 0.0;
+    }
+
+    assert(one_table_in_one_table_out_params_int_return_function(table_in, 10, table_out, 5) == 50);
+
+    for (int i=0;i<5;i++)
+    {
+        assert(table_out[i] == 10);
+        table_out[i] = 0.0;
+    }
+    assert(table_out[5] == 0.0);
+
+    assert(one_table_in_one_table_out_params_unsigned_int_return_function(table_in, 10, table_out, 10) == 100);
+
+    for (int i=0;i<10;i++)
+    {
+        assert(table_out[i] == 10);
+        table_out[i] = 0.0;
+    }
+
+    assert(one_table_in_one_table_out_params_float_return_function(table_in, 5, table_out, 10) == 50);
+    
+    for (int i=0;i<5;i++)
+    {
+        assert(table_out[i] == 10);
+        table_out[i] = 0.0;
+    }
+    assert(table_out[5] == 0.0);
+
+    assert(one_table_in_one_table_out_params_double_return_function(table_in, 10, table_out, 10) == 100);
+    
+    for (int i=0;i<10;i++)
+    {
+        assert(table_out[i] == 10);
+        table_out[i] = 0.0;
+    }
+    
+    assert(one_table_in_one_table_out_params_bool_return_function(table_in, 10, table_out, 10) == false);
+    
+    for (int i=0;i<10;i++)
+    {
+        assert(table_out[i] == 10);
+        table_out[i] = 0.0;
+    }
+    
+    assert(one_table_in_one_table_out_params_bool_return_function(table_in, 5, table_out, 10) == true);
+    
+    for (int i=0;i<5;i++)
+    {
+        assert(table_out[i] == 10);
+        table_out[i] = 0.0;
+    }
+    assert(table_out[5] == 0.0);
 }
 
 /* -------------------------------------------------------------------------- */
 
 void test_two_tables_in_one_table_out_params_functions(void)
 {
+    float table_in_one[10];
+    int table_in_two[10];
+    double table_out[10];
 
+    for (int i=0;i<10;i++)
+    {
+        table_in_one[i] = 10.3;
+        table_in_two[i] = 3;
+        table_out[i] = 0.0;
+    }
+
+    two_tables_in_one_table_out_params_no_return_function(table_in_one, 10, table_in_two, 10, table_out, 10);
+
+    for (int i=0;i<10;i++)
+    {
+        assert(table_out[i] == 13.3);
+        table_out[i] = 0.0;
+    }
+
+    assert(two_tables_in_one_table_out_params_int_return_function(table_in_one, 8, table_in_two, 10, table_out, 10) == 10);
+
+    for (int i=0;i<8;i++)
+    {
+        assert(table_out[i] == 13.3);
+        table_out[i] = 0.0;
+    }
+
+    assert(table_out[8] == 3);
+    assert(table_out[9] == 3);
+    table_out[8] = 0.0;
+    table_out[9] = 0.0;
+
+    assert(two_tables_in_one_table_out_params_unsigned_int_return_function(table_in_one, 10, table_in_two, 10, table_out, 8) == 8);
+
+    for (int i=0;i<8;i++)
+    {
+        assert(table_out[i] == 13.3);
+        table_out[i] = 0.0;
+    }
+    assert(table_out[8] == 0);
+
+    assert(two_tables_in_one_table_out_params_float_return_function(table_in_one, 8, table_in_two, 8, table_out, 10) == 106.4);
+
+    for (int i=0;i<8;i++)
+    {
+        assert(table_out[i] == 13.3);
+        table_out[i] = 0.0;
+    }
+    assert(table_out[8] == 0);
+
+    assert(two_tables_in_one_table_out_params_double_return_function(table_in_one, 10, table_in_two, 10, table_out, 10) == 133);
+    
+    for (int i=0;i<10;i++)
+    {
+        assert(table_out[i] == 13.3);
+        table_out[i] = 0.0;
+    }
+
+    assert(two_tables_in_one_table_out_params_bool_return_function(table_in_one, 10, table_in_two, 10, table_out, 5) == false);
+    
+    for (int i=0;i<5;i++)
+    {
+        assert(table_out[i] == 13.3);
+        table_out[i] = 0.0;
+    }
+    assert(table_out[5] == 0);
+
+    assert(two_tables_in_one_table_out_params_bool_return_function(table_in_one, 10, table_in_two, 10, table_out, 10) == true);
+    
+    for (int i=0;i<10;i++)
+    {
+        assert(table_out[i] == 13.3);
+        table_out[i] = 0.0;
+    }   
 }
 
 /* -------------------------------------------------------------------------- */
 
 void test_one_table_in_two_tables_out_params_functions(void)
 {
+    float table_in[10];
+    double table_out_one[10];
+    int table_out_two[10];
+
+    for (int i=0;i<10;i++)
+    {
+        table_in[i] = 10.3;
+        table_out_one[i] = 0.0;
+        table_out_two[i] = 0;
+    }
+
+    one_table_in_two_tables_out_params_no_return_function(table_in, 10, table_out_one, 10, table_out_two, 10);
+
+    for (int i=0;i<10;i++)
+    {
+        assert(table_out_one[i] == 10.3);
+        assert(table_out_two[i] == 10);
+        table_out_one[i] = 0.0;
+        table_out_two[i] = 0;
+    }
+
+    assert(one_table_in_two_tables_out_params_int_return_function(table_in, 8, table_out_one, 10, table_out_two, 10) == 8);
+
+    for (int i=0;i<8;i++)
+    {
+        assert(table_out_one[i] == 10.3);
+        assert(table_out_two[i] == 10);
+        table_out_one[i] = 0.0;
+        table_out_two[i] = 0;
+    }
+    assert(table_out_one[8] == 0.0);
+    assert(table_out_two[8] == 0);
+
+    assert(one_table_in_two_tables_out_params_unsigned_int_return_function(table_in, 10, table_out_one, 10, table_out_two, 9) == 10);
+    
+    for (int i=0;i<9;i++)
+    {
+        assert(table_out_one[i] == 10.3);
+        assert(table_out_two[i] == 10);
+        table_out_one[i] = 0.0;
+        table_out_two[i] = 0;
+    }
+    assert(table_out_one[9] == 10.3);
+    assert(table_out_two[9] == 0);
+    table_out_one[9] = 0.0;
+
+    assert(one_table_in_two_tables_out_params_float_return_function(table_in, 10, table_out_one, 10, table_out_two, 10) == 103);
+
+    for (int i=0;i<10;i++)
+    {
+        assert(table_out_one[i] == 10.3);
+        assert(table_out_two[i] == 10);
+        table_out_one[i] = 0.0;
+        table_out_two[i] = 0;
+    }
+
+    assert(one_table_in_two_tables_out_params_double_return_function(table_in, 8, table_out_one, 10, table_out_two, 10) == 82.4);
+
+    for (int i=0;i<8;i++)
+    {
+        assert(table_out_one[i] == 10.3);
+        assert(table_out_two[i] == 10);
+        table_out_one[i] = 0.0;
+        table_out_two[i] = 0;
+    }
+
+    assert(one_table_in_two_tables_out_params_bool_return_function(table_in, 8, table_out_one, 10, table_out_two, 10) == false);
+
+    for (int i=0;i<8;i++)
+    {
+        assert(table_out_one[i] == 10.3);
+        assert(table_out_two[i] == 10);
+        table_out_one[i] = 0.0;
+        table_out_two[i] = 0;
+    }
+    assert(table_out_one[8] == 0.0);
+    assert(table_out_two[8] == 0);
+
+    assert(one_table_in_two_tables_out_params_bool_return_function(table_in, 10, table_out_one, 10, table_out_two, 10) == true);
+
+    for (int i=0;i<10;i++)
+    {
+        assert(table_out_one[i] == 10.3);
+        assert(table_out_two[i] == 10);
+        table_out_one[i] = 0.0;
+        table_out_two[i] = 0;
+    }
 
 }
 
@@ -499,6 +891,38 @@ void test_one_table_in_two_tables_out_params_functions(void)
 
 void test_two_tables_in_two_tables_out_params_functions(void)
 {
+    float table_in_one[10];
+    int table_in_two[10];
+    double table_out_one[10];
+    char table_out_two[10];
+
+    for (int i=0;i<10;i++)
+    {
+        table_in_one[i] = 10.3;
+        table_in_two[i] = 3;
+        table_out_one[i] = 0;
+        table_out_two[i] = 0;
+    }
+
+    two_tables_in_two_tables_out_params_no_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 10, table_out_two, 10);
+
+    strcmp();
+    for (int i=0;i<10;i++)
+    {
+        assert(table_out_one[i] == 0);
+        table_out_one[i] = 0;
+        table_out_two[i] = 0;
+    }
+
+    two_tables_in_two_tables_out_params_int_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 10, table_out_two, 10);
+
+    two_tables_in_two_tables_out_params_unsigned_int_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 10, table_out_two, 10);
+
+    two_tables_in_two_tables_out_params_float_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 10, table_out_two, 10);
+
+    two_tables_in_two_tables_out_params_double_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 10, table_out_two, 10);
+
+    two_tables_in_two_tables_out_params_bool_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 10, table_out_two, 10);
 
 }
 
