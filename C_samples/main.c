@@ -67,8 +67,36 @@ int main(void)
     printf("Testing functions with three in and three out parameters ended succesfully.\r\n");
    
     printf("Proceeding with testing functions with one table in and no out parameters...\r\n");
+    test_one_table_in_no_out_params_functions();
+    printf("Testing functions with one table in and no out parameters ended succesfully.\r\n");
 
+    printf("Proceeding with testing functions with no in and one table out parameters...\r\n");
+    test_no_in_one_table_out_params_functions();
+    printf("Testing functions with no in and one table out parameters ended succesfully.\r\n");
 
+    printf("Proceeding with testing functions with one table in and one out parameters...\r\n");
+    test_one_table_in_one_out_params_functions();
+    printf("Testing functions with one table in and one out parameters ended succesfully.\r\n");
+
+    printf("Proceeding with testing functions with one in and one table out parameters...\r\n");
+    test_one_in_one_table_out_params_functions();
+    printf("Testing functions with one in and one table out parameters ended succesfully.\r\n");
+
+    printf("Proceeding with testing functions with one table in and one table out parameters...\r\n");
+    test_one_table_in_one_table_out_params_functions();
+    printf("Testing functions with one table in and one table out parameters ended succesfully.\r\n");
+
+    printf("Proceeding with testing functions with two tables in and one table out parameters...\r\n");
+    test_two_tables_in_one_table_out_params_functions();
+    printf("Testing functions with two tables in and one table out parameters ended succesfully.\r\n");
+
+    printf("Proceeding with testing functions with one table in and two tables out parameters...\r\n");
+    test_one_table_in_two_tables_out_params_functions();
+    printf("Testing functions with one table in and two tables out parameters ended succesfully.\r\n");
+
+    printf("Proceeding with testing functions with two tables in and two tables out parameters...\r\n");
+    test_two_tables_in_two_tables_out_params_functions();
+    printf("Testing functions with two tables in and two tables out parameters ended succesfully.\r\n");
 }
 
 /* ------------------------ Testing functions ------------------------------ */
@@ -904,26 +932,109 @@ void test_two_tables_in_two_tables_out_params_functions(void)
         table_out_two[i] = 0;
     }
 
-    two_tables_in_two_tables_out_params_no_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 10, table_out_two, 10);
+    two_tables_in_two_tables_out_params_no_return_function(table_in_one, 8, table_in_two, 10, table_out_one, 10, table_out_two, 10);
 
-    strcmp();
+    assert(strcmp(table_out_two, "Hello Wor") == 0);
+
     for (int i=0;i<10;i++)
     {
-        assert(table_out_one[i] == 0);
+        assert(table_out_one[i] == 13.3);
         table_out_one[i] = 0;
         table_out_two[i] = 0;
     }
 
-    two_tables_in_two_tables_out_params_int_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 10, table_out_two, 10);
+    assert(two_tables_in_two_tables_out_params_int_return_function(table_in_one, 8, table_in_two, 10, table_out_one, 10, table_out_two, 8) == 10);
 
-    two_tables_in_two_tables_out_params_unsigned_int_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 10, table_out_two, 10);
+    assert(strcmp(table_out_two, "Hello W") == 0);
 
-    two_tables_in_two_tables_out_params_float_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 10, table_out_two, 10);
+    for (int i=0;i<10;i++)
+    {
+        if (i < 8){
+            assert(table_out_one[i] == 13.3);
+        }
+        else
+        {
+            assert(table_out_one[i] == 3);
+        }
+        table_out_one[i] = 0;
+        table_out_two[i] = 0;
+    }
 
-    two_tables_in_two_tables_out_params_double_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 10, table_out_two, 10);
+    assert(two_tables_in_two_tables_out_params_unsigned_int_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 8, table_out_two, 10) == 8);
 
-    two_tables_in_two_tables_out_params_bool_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 10, table_out_two, 10);
+    assert(strcmp(table_out_two, "Hello Wor") == 0);
 
+    for (int i=0;i<8;i++)
+    {
+        assert(table_out_one[i] == 13.3);
+        table_out_one[i] = 0;
+        table_out_two[i] = 0;
+    }
+
+    assert(table_out_one[8] == 0);
+    assert(table_out_one[9] == 0);
+    table_out_two[8] = 0;
+    table_out_two[9] = 0;
+
+    assert(two_tables_in_two_tables_out_params_float_return_function(table_in_one, 10, table_in_two, 8, table_out_one, 10, table_out_two, 10) == 127);
+
+    assert(strcmp(table_out_two, "Hello Wor") == 0);
+
+    for (int i=0;i<10;i++)
+    {
+        if (i < 8){
+            assert(table_out_one[i] == 13.3);
+        }
+        else
+        {
+            assert(table_out_one[i] == 10.3);
+        }
+        table_out_one[i] = 0;
+        table_out_two[i] = 0;
+    }
+
+    assert(two_tables_in_two_tables_out_params_double_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 10, table_out_two, 6) == 133);
+
+    assert(strcmp(table_out_two, "Hello") == 0);
+
+    for (int i=0;i<10;i++)
+    {
+        assert(table_out_one[i] == 13.3);
+        table_out_one[i] = 0;
+        table_out_two[i] = 0;
+    }
+
+    assert(two_tables_in_two_tables_out_params_bool_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 10, table_out_two, 10) == true);
+    
+    assert(strcmp(table_out_two, "Hello Wor") == 0);
+
+    for (int i=0;i<10;i++)
+    {
+        assert(table_out_one[i] == 13.3);
+        table_out_one[i] = 0;
+        table_out_two[i] = 0;
+    }
+
+    assert(two_tables_in_two_tables_out_params_bool_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 8, table_out_two, 10) == false);
+    
+    assert(strcmp(table_out_two, "Hello Wor") == 0);
+
+    for (int i=0;i<10;i++)
+    {
+        assert(table_out_one[i] == 13.3);
+        table_out_one[i] = 0;
+        table_out_two[i] = 0;
+    }
+
+    for (int i=0;i<8;i++)
+    {
+        assert(table_out_one[i] == 13.3);
+        table_out_one[i] = 0;
+        table_out_two[i] = 0;
+    }
+
+    assert(table_out_one[8] == 0);
+    assert(table_out_one[9] == 0);
 }
 
 /* -------------------------------------------------------------------------- */
