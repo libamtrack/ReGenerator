@@ -34,69 +34,72 @@ void test_two_tables_in_two_tables_out_params_functions(void);
 
 int main(void)
 {
-    printf("Testing functions with no parameters...\r\n");
-    test_no_params_functions();
-    printf("Testing functions with no parameters ended succesfully.\r\n");
-    
-    printf("Proceeding with testing functions with only in parameters...\r\n");
-    test_one_in_no_out_params_functions();
-    printf("Testing functions with only in parameters ended succesfully.\r\n");
-    
-    printf("Proceeding with testing functions with only out parameters...\r\n");
-    test_no_in_one_out_params_functions();
-    printf("Testing functions with only out parameters ended succesfully.\r\n");
-    
-    printf("Proceeding with testing functions with one in and one out parameter...\r\n");
-    test_one_in_one_out_params_functions();
-    printf("Testing functions with one in and one out parameter ended succesfully.\r\n");
-    
-    printf("Proceeding with testing functions with one in and two out parameters...\r\n");
-    test_one_in_two_out_params_functions();
-    printf("Testing functions with one in and two out parameters ended succesfully.\r\n");
+    printf("Hello, World!");
 
-    printf("Proceeding with testing functions with two in and two out parameters...\r\n");
-    test_two_in_two_out_params_functions();
-    printf("Testing functions with two in and two out parameters ended succesfully.\r\n");
+    return 0;
+    // printf("Testing functions with no parameters...\r\n");
+    // test_no_params_functions();
+    // printf("Testing functions with no parameters ended succesfully.\r\n");
+    
+    // printf("Proceeding with testing functions with only in parameters...\r\n");
+    // test_one_in_no_out_params_functions();
+    // printf("Testing functions with only in parameters ended succesfully.\r\n");
+    
+    // printf("Proceeding with testing functions with only out parameters...\r\n");
+    // test_no_in_one_out_params_functions();
+    // printf("Testing functions with only out parameters ended succesfully.\r\n");
+    
+    // printf("Proceeding with testing functions with one in and one out parameter...\r\n");
+    // test_one_in_one_out_params_functions();
+    // printf("Testing functions with one in and one out parameter ended succesfully.\r\n");
+    
+    // printf("Proceeding with testing functions with one in and two out parameters...\r\n");
+    // test_one_in_two_out_params_functions();
+    // printf("Testing functions with one in and two out parameters ended succesfully.\r\n");
 
-    printf("Proceeding with testing functions with two in and three out parameters...\r\n");
-    test_two_in_three_out_params_functions();
-    printf("Testing functions with two in and three out parameters ended succesfully.\r\n");
+    // printf("Proceeding with testing functions with two in and two out parameters...\r\n");
+    // test_two_in_two_out_params_functions();
+    // printf("Testing functions with two in and two out parameters ended succesfully.\r\n");
 
-    printf("Proceeding with testing functions with three in and three out parameters...\r\n");
-    test_three_in_three_out_params_functions();
-    printf("Testing functions with three in and three out parameters ended succesfully.\r\n");
+    // printf("Proceeding with testing functions with two in and three out parameters...\r\n");
+    // test_two_in_three_out_params_functions();
+    // printf("Testing functions with two in and three out parameters ended succesfully.\r\n");
+
+    // printf("Proceeding with testing functions with three in and three out parameters...\r\n");
+    // test_three_in_three_out_params_functions();
+    // printf("Testing functions with three in and three out parameters ended succesfully.\r\n");
    
-    printf("Proceeding with testing functions with one table in and no out parameters...\r\n");
-    test_one_table_in_no_out_params_functions();
-    printf("Testing functions with one table in and no out parameters ended succesfully.\r\n");
+    // printf("Proceeding with testing functions with one table in and no out parameters...\r\n");
+    // test_one_table_in_no_out_params_functions();
+    // printf("Testing functions with one table in and no out parameters ended succesfully.\r\n");
 
-    printf("Proceeding with testing functions with no in and one table out parameters...\r\n");
-    test_no_in_one_table_out_params_functions();
-    printf("Testing functions with no in and one table out parameters ended succesfully.\r\n");
+    // printf("Proceeding with testing functions with no in and one table out parameters...\r\n");
+    // test_no_in_one_table_out_params_functions();
+    // printf("Testing functions with no in and one table out parameters ended succesfully.\r\n");
 
-    printf("Proceeding with testing functions with one table in and one out parameters...\r\n");
-    test_one_table_in_one_out_params_functions();
-    printf("Testing functions with one table in and one out parameters ended succesfully.\r\n");
+    // printf("Proceeding with testing functions with one table in and one out parameters...\r\n");
+    // test_one_table_in_one_out_params_functions();
+    // printf("Testing functions with one table in and one out parameters ended succesfully.\r\n");
 
-    printf("Proceeding with testing functions with one in and one table out parameters...\r\n");
-    test_one_in_one_table_out_params_functions();
-    printf("Testing functions with one in and one table out parameters ended succesfully.\r\n");
+    // printf("Proceeding with testing functions with one in and one table out parameters...\r\n");
+    // test_one_in_one_table_out_params_functions();
+    // printf("Testing functions with one in and one table out parameters ended succesfully.\r\n");
 
-    printf("Proceeding with testing functions with one table in and one table out parameters...\r\n");
-    test_one_table_in_one_table_out_params_functions();
-    printf("Testing functions with one table in and one table out parameters ended succesfully.\r\n");
+    // printf("Proceeding with testing functions with one table in and one table out parameters...\r\n");
+    // test_one_table_in_one_table_out_params_functions();
+    // printf("Testing functions with one table in and one table out parameters ended succesfully.\r\n");
 
-    printf("Proceeding with testing functions with two tables in and one table out parameters...\r\n");
-    test_two_tables_in_one_table_out_params_functions();
-    printf("Testing functions with two tables in and one table out parameters ended succesfully.\r\n");
+    // printf("Proceeding with testing functions with two tables in and one table out parameters...\r\n");
+    // test_two_tables_in_one_table_out_params_functions();
+    // printf("Testing functions with two tables in and one table out parameters ended succesfully.\r\n");
 
-    printf("Proceeding with testing functions with one table in and two tables out parameters...\r\n");
-    test_one_table_in_two_tables_out_params_functions();
-    printf("Testing functions with one table in and two tables out parameters ended succesfully.\r\n");
+    // printf("Proceeding with testing functions with one table in and two tables out parameters...\r\n");
+    // test_one_table_in_two_tables_out_params_functions();
+    // printf("Testing functions with one table in and two tables out parameters ended succesfully.\r\n");
 
-    printf("Proceeding with testing functions with two tables in and two tables out parameters...\r\n");
-    test_two_tables_in_two_tables_out_params_functions();
-    printf("Testing functions with two tables in and two tables out parameters ended succesfully.\r\n");
+    // printf("Proceeding with testing functions with two tables in and two tables out parameters...\r\n");
+    // test_two_tables_in_two_tables_out_params_functions();
+    // printf("Testing functions with two tables in and two tables out parameters ended succesfully.\r\n");
 }
 
 /* ------------------------ Testing functions ------------------------------ */
