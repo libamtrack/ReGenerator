@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <math.h>
 
 #include "no_params_sample.h"
 #include "only_in_params_sample.h"
@@ -133,6 +134,8 @@ int main(void)
     printf("----------------------------------------------------------------------\r\n");
 
     printf("Testing finished, all tests passed.\r\n");
+
+    return 0;
 }
 
 /* ------------------------ Testing functions ------------------------------ */
@@ -518,17 +521,22 @@ void test_one_table_in_no_out_params_functions(void)
 
     for (int i=0;i<10;i++)
     {
-        table[i] = -15.35;
+        table[i] = -15.25;
     }
 
-    printf("Printing 10 numbers in separete lines equal to: -15.35:\r\n");
+    printf("Printing 10 numbers in separete lines equal to: -15.25:\r\n");
     one_table_in_no_out_params_no_return_function(table, 10);
 
-    assert(one_table_in_no_out_params_int_return_function(table, 10) == -153);
-    assert(one_table_in_no_out_params_unsigned_int_return_function(table, 10) == 153);
-    assert(one_table_in_no_out_params_float_return_function(table, 5) == -76.75f);
-    printf("%f\r\n", one_table_in_no_out_params_double_return_function(table, 10));
-    assert(one_table_in_no_out_params_double_return_function(table, 10) == -153.5);
+    assert(one_table_in_no_out_params_int_return_function(table, 10) == -152);
+    assert(one_table_in_no_out_params_unsigned_int_return_function(table, 10) == 152);
+    assert(one_table_in_no_out_params_float_return_function(table, 5) == -76.25f);
+    assert(one_table_in_no_out_params_double_return_function(table, 10) == -152.5);
+    
+    for (int i=0;i<10;i++)
+    {
+        table[i] *= -1;
+    }
+
     assert(one_table_in_no_out_params_bool_return_function(table, 10) == false);
     assert(one_table_in_no_out_params_bool_return_function(table, 3) == true);
 }
@@ -555,7 +563,7 @@ void test_no_in_one_table_out_params_functions(void)
         table[i] = 0.0;
     }
 
-    assert(one_table_in_no_out_params_unsigned_int_return_function(table, 10) == 100);
+    assert(no_in_one_table_out_params_unsigned_int_return_function(table, 10) == 100);
     
     for (int i=0;i<10;i++)
     {
@@ -563,7 +571,7 @@ void test_no_in_one_table_out_params_functions(void)
         table[i] = 0.0;
     }
 
-    assert(one_table_in_no_out_params_float_return_function(table, 3) == 30.6f);
+    assert(no_in_one_table_out_params_float_return_function(table, 3) == 30.6f);
 
     for (int i=0;i<3;i++)
     {
@@ -572,7 +580,7 @@ void test_no_in_one_table_out_params_functions(void)
     }
     assert(table[3] == 0.0);
 
-    assert(one_table_in_no_out_params_double_return_function(table, 10) == 102);
+    assert(fabs(no_in_one_table_out_params_double_return_function(table, 10) - 102) < 0.0001);
 
     for (int i=0;i<10;i++)
     {
@@ -580,7 +588,7 @@ void test_no_in_one_table_out_params_functions(void)
         table[i] = 0.0;
     }
 
-    assert(one_table_in_no_out_params_bool_return_function(table, 10) == false);
+    assert(no_in_one_table_out_params_bool_return_function(table, 10) == false);
 
     for (int i=0;i<10;i++)
     {
@@ -588,7 +596,7 @@ void test_no_in_one_table_out_params_functions(void)
         table[i] = 0.0;
     }
 
-    assert(one_table_in_no_out_params_bool_return_function(table, 3) == true);
+    assert(no_in_one_table_out_params_bool_return_function(table, 3) == true);
     
     for (int i=0;i<3;i++)
     {
@@ -612,32 +620,31 @@ void test_one_table_in_one_out_params_functions(void)
     }
 
     one_table_in_one_out_param_no_return_function(table, 10, &param_out);
-    assert(param_out == 102);
+    assert(param_out == 102.0f);
     param_out = 0;
 
     assert(one_table_in_one_out_param_int_return_function(table, 3, &param_out) == 30);
-    assert(param_out == 30);
+    assert(param_out == 30.6f);
     param_out = 0.0;
 
     assert(one_table_in_one_out_param_unsigned_int_return_function(table, 10, &param_out) == 102);
-    assert(param_out == 102);
+    assert(param_out == 102.0f);
     param_out = 0.0;
 
     assert(one_table_in_one_out_param_float_return_function(table, 3, &param_out) == 30.6f);
-    assert(param_out == 30.6);
+    assert(param_out == 30.6f);
     param_out = 0.0;
 
     assert(one_table_in_one_out_param_double_return_function(table, 10, &param_out) == 102);
-    assert(param_out == 102);
+    assert(param_out == 102.0f);
     param_out = 0.0;
 
-    assert(one_table_in_one_out_param_bool_return_function(table, 3, &param_out) == false);
-    assert(param_out == 30.6);
+    assert(one_table_in_one_out_param_bool_return_function(table, 10, &param_out) == false);
+    assert(param_out == 102.0f);
     param_out = 0.0;
-
-    assert(one_table_in_one_out_param_bool_return_function(table, 10, &param_out) == true);
-    assert(param_out == 102);
-    param_out = 0.0;
+    
+    assert(one_table_in_one_out_param_bool_return_function(table, 3, &param_out) == true);
+    assert(param_out == 30.6f);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -674,12 +681,12 @@ void test_one_in_one_table_out_params_functions(void)
     
     for (int i=0;i<4;i++)
     {
-        assert(table[i] == 10.25);
+        assert(table[i] == 10.2);
         table[i] = 0.0;
     }
     assert(table[4] == 0.0);
 
-    assert(one_param_in_one_table_out_double_return_function(-10.2, table, 10) == -102);
+    assert(fabs(one_param_in_one_table_out_double_return_function(-10.2, table, 10) + 102.0) < 0.0001);
 
     for (int i=0;i<10;i++)
     {
@@ -695,11 +702,11 @@ void test_one_in_one_table_out_params_functions(void)
         table[i] = 0.0;
     }
 
-    assert(one_param_in_one_table_out_bool_return_function(10.2, table, 4) == true);
+    assert(one_param_in_one_table_out_bool_return_function(0.5, table, 4) == true);
 
     for (int i=0;i<4;i++)
     {
-        assert(table[i] == 10.2);
+        assert(table[i] == 0.5);
         table[i] = 0.0;
     }
     assert(table[4] == 0.0);
@@ -797,7 +804,7 @@ void test_two_tables_in_one_table_out_params_functions(void)
 
     for (int i=0;i<10;i++)
     {
-        assert(table_out[i] == 13.3);
+        assert(fabs(table_out[i] - 13.3) < 0.0001);
         table_out[i] = 0.0;
     }
 
@@ -805,7 +812,7 @@ void test_two_tables_in_one_table_out_params_functions(void)
 
     for (int i=0;i<8;i++)
     {
-        assert(table_out[i] == 13.3);
+        assert(fabs(table_out[i] - 13.3) < 0.0001);
         table_out[i] = 0.0;
     }
 
@@ -818,33 +825,33 @@ void test_two_tables_in_one_table_out_params_functions(void)
 
     for (int i=0;i<8;i++)
     {
-        assert(table_out[i] == 13.3);
+        assert(fabs(table_out[i] - 13.3) < 0.0001);
         table_out[i] = 0.0;
     }
     assert(table_out[8] == 0);
 
-    assert(two_tables_in_one_table_out_params_float_return_function(table_in_one, 8, table_in_two, 8, table_out, 10) == 106.4f);
+    assert(fabs(two_tables_in_one_table_out_params_float_return_function(table_in_one, 8, table_in_two, 8, table_out, 10)) - 106.4f < 0.0001);
 
     for (int i=0;i<8;i++)
     {
-        assert(table_out[i] == 13.3);
+        assert(fabs(table_out[i] - 13.3) < 0.0001);
         table_out[i] = 0.0;
     }
     assert(table_out[8] == 0);
 
-    assert(two_tables_in_one_table_out_params_double_return_function(table_in_one, 10, table_in_two, 10, table_out, 10) == 133);
+    assert(fabs(two_tables_in_one_table_out_params_double_return_function(table_in_one, 10, table_in_two, 10, table_out, 10)) - 133.0 < 0.0001);
     
     for (int i=0;i<10;i++)
     {
-        assert(table_out[i] == 13.3);
+        assert(fabs(table_out[i] - 13.3) < 0.0001);
         table_out[i] = 0.0;
     }
 
-    assert(two_tables_in_one_table_out_params_bool_return_function(table_in_one, 10, table_in_two, 10, table_out, 5) == false);
+    assert(two_tables_in_one_table_out_params_bool_return_function(table_in_one, 5, table_in_two, 5, table_out, 10) == false);
     
     for (int i=0;i<5;i++)
     {
-        assert(table_out[i] == 13.3);
+        assert(fabs(table_out[i] - 13.3) < 0.0001);
         table_out[i] = 0.0;
     }
     assert(table_out[5] == 0);
@@ -853,7 +860,7 @@ void test_two_tables_in_one_table_out_params_functions(void)
     
     for (int i=0;i<10;i++)
     {
-        assert(table_out[i] == 13.3);
+        assert(fabs(table_out[i] - 13.3) < 0.0001);
         table_out[i] = 0.0;
     }   
 }
@@ -877,7 +884,7 @@ void test_one_table_in_two_tables_out_params_functions(void)
 
     for (int i=0;i<10;i++)
     {
-        assert(table_out_one[i] == 10.3);
+        assert(fabs(table_out_one[i]) - 10.3 < 0.0001);
         assert(table_out_two[i] == 10);
         table_out_one[i] = 0.0;
         table_out_two[i] = 0;
@@ -887,7 +894,7 @@ void test_one_table_in_two_tables_out_params_functions(void)
 
     for (int i=0;i<8;i++)
     {
-        assert(table_out_one[i] == 10.3);
+        assert(fabs(table_out_one[i]) - 10.3 < 0.0001);
         assert(table_out_two[i] == 10);
         table_out_one[i] = 0.0;
         table_out_two[i] = 0;
@@ -899,30 +906,30 @@ void test_one_table_in_two_tables_out_params_functions(void)
     
     for (int i=0;i<9;i++)
     {
-        assert(table_out_one[i] == 10.3);
+        assert(fabs(table_out_one[i]) - 10.3 < 0.0001);
         assert(table_out_two[i] == 10);
         table_out_one[i] = 0.0;
         table_out_two[i] = 0;
     }
-    assert(table_out_one[9] == 10.3);
+    assert(fabs(table_out_one[9]) - 10.3 < 0.0001);
     assert(table_out_two[9] == 0);
     table_out_one[9] = 0.0;
 
-    assert(one_table_in_two_tables_out_params_float_return_function(table_in, 10, table_out_one, 10, table_out_two, 10) == 103);
+    assert(fabs(one_table_in_two_tables_out_params_float_return_function(table_in, 10, table_out_one, 10, table_out_two, 10)) - 103 < 0.0001);
 
     for (int i=0;i<10;i++)
     {
-        assert(table_out_one[i] == 10.3);
+        assert(fabs(table_out_one[i]) - 10.3 < 0.0001);
         assert(table_out_two[i] == 10);
         table_out_one[i] = 0.0;
         table_out_two[i] = 0;
     }
 
-    assert(one_table_in_two_tables_out_params_double_return_function(table_in, 8, table_out_one, 10, table_out_two, 10) == 82.4);
+    assert(fabs(one_table_in_two_tables_out_params_double_return_function(table_in, 8, table_out_one, 10, table_out_two, 10)) - 82.4 < 0.0001);
 
     for (int i=0;i<8;i++)
     {
-        assert(table_out_one[i] == 10.3);
+        assert(fabs(table_out_one[i]) - 10.3 < 0.0001);
         assert(table_out_two[i] == 10);
         table_out_one[i] = 0.0;
         table_out_two[i] = 0;
@@ -932,7 +939,7 @@ void test_one_table_in_two_tables_out_params_functions(void)
 
     for (int i=0;i<8;i++)
     {
-        assert(table_out_one[i] == 10.3);
+        assert(fabs(table_out_one[i]) - 10.3 < 0.0001);
         assert(table_out_two[i] == 10);
         table_out_one[i] = 0.0;
         table_out_two[i] = 0;
@@ -944,7 +951,7 @@ void test_one_table_in_two_tables_out_params_functions(void)
 
     for (int i=0;i<10;i++)
     {
-        assert(table_out_one[i] == 10.3);
+        assert(fabs(table_out_one[i]) - 10.3 < 0.0001);
         assert(table_out_two[i] == 10);
         table_out_one[i] = 0.0;
         table_out_two[i] = 0;
@@ -975,7 +982,7 @@ void test_two_tables_in_two_tables_out_params_functions(void)
 
     for (int i=0;i<10;i++)
     {
-        assert(table_out_one[i] == 13.3);
+        assert(fabs(table_out_one[i]) - 13.3 < 0.0001);
         table_out_one[i] = 0;
         table_out_two[i] = 0;
     }
@@ -987,7 +994,7 @@ void test_two_tables_in_two_tables_out_params_functions(void)
     for (int i=0;i<10;i++)
     {
         if (i < 8){
-            assert(table_out_one[i] == 13.3);
+            assert(fabs(table_out_one[i]) - 13.3 < 0.0001);
         }
         else
         {
@@ -1003,7 +1010,7 @@ void test_two_tables_in_two_tables_out_params_functions(void)
 
     for (int i=0;i<8;i++)
     {
-        assert(table_out_one[i] == 13.3);
+        assert(fabs(table_out_one[i]) - 13.3 < 0.0001);
         table_out_one[i] = 0;
         table_out_two[i] = 0;
     }
@@ -1013,30 +1020,30 @@ void test_two_tables_in_two_tables_out_params_functions(void)
     table_out_two[8] = 0;
     table_out_two[9] = 0;
 
-    assert(two_tables_in_two_tables_out_params_float_return_function(table_in_one, 10, table_in_two, 8, table_out_one, 10, table_out_two, 10) == 127);
+    assert(fabs(two_tables_in_two_tables_out_params_float_return_function(table_in_one, 10, table_in_two, 8, table_out_one, 10, table_out_two, 10)) - 127 < 0.0001);
 
     assert(strcmp(table_out_two, "Hello Wor") == 0);
 
     for (int i=0;i<10;i++)
     {
         if (i < 8){
-            assert(table_out_one[i] == 13.3);
+            assert(fabs(table_out_one[i]) - 13.3 < 0.0001);
         }
         else
         {
-            assert(table_out_one[i] == 10.3);
+            assert(fabs(table_out_one[i]) - 10.3 < 0.0001);
         }
         table_out_one[i] = 0;
         table_out_two[i] = 0;
     }
 
-    assert(two_tables_in_two_tables_out_params_double_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 10, table_out_two, 6) == 133);
+    assert(fabs(two_tables_in_two_tables_out_params_double_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 10, table_out_two, 6)) - 133 < 0.0001);
 
     assert(strcmp(table_out_two, "Hello") == 0);
 
     for (int i=0;i<10;i++)
     {
-        assert(table_out_one[i] == 13.3);
+        assert(fabs(table_out_one[i]) - 13.3 < 0.0001);
         table_out_one[i] = 0;
         table_out_two[i] = 0;
     }
@@ -1047,25 +1054,25 @@ void test_two_tables_in_two_tables_out_params_functions(void)
 
     for (int i=0;i<10;i++)
     {
-        assert(table_out_one[i] == 13.3);
+        assert(fabs(table_out_one[i]) - 13.3 < 0.0001);
         table_out_one[i] = 0;
         table_out_two[i] = 0;
     }
 
-    assert(two_tables_in_two_tables_out_params_bool_return_function(table_in_one, 10, table_in_two, 10, table_out_one, 8, table_out_two, 10) == false);
+    assert(two_tables_in_two_tables_out_params_bool_return_function(table_in_one, 8, table_in_two, 8, table_out_one, 10, table_out_two, 10) == false);
     
     assert(strcmp(table_out_two, "Hello Wor") == 0);
 
     for (int i=0;i<10;i++)
     {
-        assert(table_out_one[i] == 13.3);
+        assert(fabs(table_out_one[i]) - 13.3 < 0.0001);
         table_out_one[i] = 0;
         table_out_two[i] = 0;
     }
 
     for (int i=0;i<8;i++)
     {
-        assert(table_out_one[i] == 13.3);
+        assert(fabs(table_out_one[i]) - 13.3 < 0.0001);
         table_out_one[i] = 0;
         table_out_two[i] = 0;
     }

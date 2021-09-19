@@ -206,26 +206,26 @@ int one_param_in_one_table_out_params_int_return_function( double param_in_one,
                                                             double* table_param_out_one,
                                                             unsigned int size_param_out_one)
 {
-    int sum = 0;
+    double sum = 0;
     for (unsigned int i=0;i<size_param_out_one;i++)
     {
         table_param_out_one[i] = param_in_one;
-        sum += (int)(-1*param_in_one);
+        sum += -1*param_in_one;
     }
-    return sum;
+    return (int)sum;
 }
 
 unsigned int one_param_in_one_table_out_unsigned_int_return_function( double param_in_one,
                                                                         double* table_param_out_one,
                                                                         unsigned int size_param_out_one)
 {
-    unsigned int sum = 0;
+    double sum = 0;
     for (unsigned int i=0;i<size_param_out_one;i++)
     {
         table_param_out_one[i] = param_in_one;
-        sum += (unsigned int)abs(param_in_one);
+        sum += param_in_one;
     }
-    return sum;
+    return (unsigned int)abs(sum);
 }
 
 
@@ -263,7 +263,7 @@ bool one_param_in_one_table_out_bool_return_function( double param_in_one,
     {
         table_param_out_one[i] = param_in_one;
     }
-    return param_in_one < size_param_out_one;
+    return table_sum(table_param_out_one, size_param_out_one) < size_param_out_one;
 }
 
 /* -------------------- One table in, one table out params ------------------------*/
@@ -322,7 +322,7 @@ float one_table_in_one_table_out_params_float_return_function( double* table_par
     for (unsigned int i=0; (i < size_param_out_one) && (i < size_param_in_one); i++)
     {
         table_param_out_one[i] = (int)table_param_in_one[i];
-        sum += table_param_in_one[i];
+        sum += table_param_out_one[i];
     }
     return sum;
 }
@@ -337,7 +337,7 @@ double one_table_in_one_table_out_params_double_return_function( double* table_p
     for (unsigned int i=0; (i < size_param_out_one) && (i < size_param_in_one); i++)
     {
         table_param_out_one[i] = (int)table_param_in_one[i];
-        sum += table_param_in_one[i];
+        sum += table_param_out_one[i];
     }
     return sum;
 }
