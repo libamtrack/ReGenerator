@@ -1,8 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 
 #include "multiple_in_out_params_sample.h"
-#include <math.h>
 
 
 /* -------------------- One in, two out params ------------------------*/

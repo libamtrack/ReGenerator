@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdbool.h>
-
-#include "multiple_in_out_params_sample.h"
-#include <math.h>
+#include <stdlib.h>
 #include <string.h>
+#include <math.h>
+
+#include "tables_params_sample.h"
 
 /* -------------------- Auxilliary functions ------------------------*/
 
@@ -41,7 +42,7 @@ int one_table_in_no_out_params_int_return_function( double* table_param_in_one,
 unsigned int one_table_in_no_out_params_unsigned_int_return_function( double* table_param_in_one,
                                                                         unsigned int size_param_in_one)
 {
-    return (unsigned int)abs(table_sum(table_param_in_one, size_param_in_one));
+    return (unsigned int)fabs(table_sum(table_param_in_one, size_param_in_one));
 }
 
 
@@ -161,7 +162,7 @@ unsigned int one_table_in_one_out_param_unsigned_int_return_function( double* ta
                                                                         float* param_out_one)
 {
     *param_out_one = table_sum(table_param_in_one, size_param_in_one);
-    return (unsigned int)abs(*param_out_one);
+    return (unsigned int)fabs(*param_out_one);
 }
 
 
@@ -225,7 +226,7 @@ unsigned int one_param_in_one_table_out_unsigned_int_return_function( double par
         table_param_out_one[i] = param_in_one;
         sum += param_in_one;
     }
-    return (unsigned int)abs(sum);
+    return (unsigned int)fabs(sum);
 }
 
 
