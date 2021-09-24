@@ -65,16 +65,15 @@ jobs:
       
       - name: Run compilation generation
         run: |
-         cd ./C_samples
-         cmake -S . -B build
+         cmake -S ./C_samples -B ./C_samples/build
          
       - name: Run build
         run: |
-         cmake --build build
+         cmake --build C_samples/build
 
       - name: Run tests
         run: |
-         ./build/C_samples
+         ./C_samples/build/C_samples
 
   build-c-windows:
     # The type of runner that the job will run on
@@ -94,13 +93,12 @@ jobs:
         
       - name: Run compilation generation
         run: |
-         cd ./C_samples
-         cmake -S . -B build
+         cmake -S /C_samples -B C_samples/build
          
       - name: Run build
         run: |
-         cmake --build build
+         cmake --build C_samples/build
 
       - name: Run tests
         run: |
-         build/Debug/C_samples.exe
+         C_samples/build/Debug/C_samples.exe
