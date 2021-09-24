@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdbool.h>
-
-#include "multiple_in_out_params_sample.h"
-#include <math.h>
+#include <stdlib.h>
 #include <string.h>
+#include <math.h>
+
+#include "tables_params_sample.h"
 
 /* -------------------- Auxilliary functions ------------------------*/
 
@@ -25,6 +26,10 @@ static double table_sum(double* table, unsigned int length)
 void one_table_in_no_out_params_no_return_function( double* table_param_in_one,
                                                     unsigned int size_param_in_one)
 {
+    for (int i=0;i<size_param_in_one;i++)
+    {
+        printf("%f\r\n", table_param_in_one[i]);
+    }
     return;
 }
 
@@ -37,7 +42,7 @@ int one_table_in_no_out_params_int_return_function( double* table_param_in_one,
 unsigned int one_table_in_no_out_params_unsigned_int_return_function( double* table_param_in_one,
                                                                         unsigned int size_param_in_one)
 {
-    return (unsigned int)abs(table_sum(table_param_in_one, size_param_in_one));
+    return (unsigned int)fabs(table_sum(table_param_in_one, size_param_in_one));
 }
 
 
@@ -157,7 +162,7 @@ unsigned int one_table_in_one_out_param_unsigned_int_return_function( double* ta
                                                                         float* param_out_one)
 {
     *param_out_one = table_sum(table_param_in_one, size_param_in_one);
-    return (unsigned int)abs(*param_out_one);
+    return (unsigned int)fabs(*param_out_one);
 }
 
 
@@ -202,26 +207,26 @@ int one_param_in_one_table_out_params_int_return_function( double param_in_one,
                                                             double* table_param_out_one,
                                                             unsigned int size_param_out_one)
 {
-    int sum = 0;
+    double sum = 0;
     for (unsigned int i=0;i<size_param_out_one;i++)
     {
         table_param_out_one[i] = param_in_one;
-        sum += (int)(-1*param_in_one);
+        sum += -1*param_in_one;
     }
-    return sum;
+    return (int)sum;
 }
 
 unsigned int one_param_in_one_table_out_unsigned_int_return_function( double param_in_one,
                                                                         double* table_param_out_one,
                                                                         unsigned int size_param_out_one)
 {
-    unsigned int sum = 0;
+    double sum = 0;
     for (unsigned int i=0;i<size_param_out_one;i++)
     {
         table_param_out_one[i] = param_in_one;
-        sum += (unsigned int)abs(param_in_one);
+        sum += param_in_one;
     }
-    return sum;
+    return (unsigned int)fabs(sum);
 }
 
 
@@ -259,7 +264,7 @@ bool one_param_in_one_table_out_bool_return_function( double param_in_one,
     {
         table_param_out_one[i] = param_in_one;
     }
-    return param_in_one < size_param_out_one;
+    return table_sum(table_param_out_one, size_param_out_one) < size_param_out_one;
 }
 
 /* -------------------- One table in, one table out params ------------------------*/
@@ -318,7 +323,7 @@ float one_table_in_one_table_out_params_float_return_function( double* table_par
     for (unsigned int i=0; (i < size_param_out_one) && (i < size_param_in_one); i++)
     {
         table_param_out_one[i] = (int)table_param_in_one[i];
-        sum += table_param_in_one[i];
+        sum += table_param_out_one[i];
     }
     return sum;
 }
@@ -333,7 +338,7 @@ double one_table_in_one_table_out_params_double_return_function( double* table_p
     for (unsigned int i=0; (i < size_param_out_one) && (i < size_param_in_one); i++)
     {
         table_param_out_one[i] = (int)table_param_in_one[i];
-        sum += table_param_in_one[i];
+        sum += table_param_out_one[i];
     }
     return sum;
 }

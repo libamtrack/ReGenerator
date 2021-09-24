@@ -1,8 +1,11 @@
 #ifndef __IN_OUT_PARAMS__
 #define __IN_OUT_PARAMS__
 
+#include <stdbool.h>
+
 /**
- * Prints new line characters on console.
+ * Prints param_in value and previous value of param_out on console.
+ * Param_out is set to param_in multiplied by 1.5.
  * 
  * @param[in] param_in first param
  * @param[out] param_out second param

@@ -1,8 +1,10 @@
 #ifndef __ONLY_OUT_PARAMS__
 #define __ONLY_OUT_PARAMS__
 
+#include <stdbool.h>
+
 /**
- * Prints new line characters on console.
+ * Prints param_one previous value on console.
  * To param_one is assigned a constant value: 10.
  * 
  * @param[out] param_one first param

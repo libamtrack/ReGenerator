@@ -4,7 +4,7 @@
 /* -------------------- One in, two out params ------------------------*/
 
 /**
- * Prints new line characters on console.
+ * Prints param_in value and previous values of param_out_one and param_out_two on console.
  * To param_out_one is assigned value of param_in multiplied by 10 
  * and to param_out_two is assigned value of param_in divided by 10.
  * 
@@ -84,7 +84,7 @@ bool one_in_two_out_params_bool_return_function(int param_in, double* param_out_
 /* -------------------- Two in, two out params ------------------------*/
 
 /**
- * Prints new line characters on console.
+ * Prints on console param_in_one and param_in_two values and previous values of param_out_one and param_out_two.
  * To param_out_one is assigned value of param_in_one multiplied by 10 plus integer value of param_in_two.
  * To param_out_two is assigned value of param_in_one divided by 10 plus integer value of param_in_two.
  * 
@@ -170,10 +170,10 @@ bool two_in_two_out_params_bool_return_function(int param_in_one, char param_in_
 /* -------------------- Two in, three out params ------------------------*/
 
 /**
- * Prints new line characters on console.
+ * Prints on console values of param_in_one, param_in_two and previous values of param_out_one, param_out_two and param_out_three.
  * To param_out_one is assigned value of param_in_one multiplied by 10 plus integer value of param_in_two.
  * To param_out_two is assigned value of param_in_one divided by 10 plus integer value of param_in_two.
- * To param_out_three is assigned value of param_in_one rounded to integer and divided by 2 plus integer value of param_in_two.
+ * To param_out_three is assigned absolute value of param_in_one divided by 2 plus integer value of param_in_two.
  * 
  * @param[in] param_in_one first in param
  * @param[in] param_in_two second in param
@@ -185,14 +185,14 @@ bool two_in_two_out_params_bool_return_function(int param_in_one, char param_in_
 void two_in_three_out_params_no_return_function(    int param_in_one, 
                                                     char param_in_two, 
                                                     double* param_out_one, 
-                                                    float param_out_two, 
+                                                    float* param_out_two, 
                                                     unsigned int* param_out_three);
 
 /**
  * This functions returns sum of param_in_one and param_in_two multiplied by -1.
  * To param_out_one is assigned value of param_in_one multiplied by 10 plus integer value of param_in_two.
  * To param_out_two is assigned value of param_in_one divided by 10 plus integer value of param_in_two.
- * To param_out_three is assigned value of param_in_one rounded to integer and divided by 2 plus integer value of param_in_two.
+ * To param_out_three is assigned absolute value of param_in_one divided by 2 plus integer value of param_in_two.
  *
  * @param[in] param_in_one first in param
  * @param[in] param_in_two second in param
@@ -212,7 +212,7 @@ int two_in_three_out_params_int_return_function(    int param_in_one,
  * This functions returns sum of param_in_one and param_in_two multiplied by 10.
  * To param_out_one is assigned value of param_in_one multiplied by 10 plus integer value of param_in_two.
  * To param_out_two is assigned value of param_in_one divided by 10 plus integer value of param_in_two.
- * To param_out_three is assigned value of param_in_one rounded to integer and divided by 2 plus integer value of param_in_two.
+ * To param_out_three is assigned absolute value of param_in_one divided by 2 plus integer value of param_in_two.
  *
  * @param[in] param_in_one first in param
  * @param[in] param_in_two second in param
@@ -232,7 +232,7 @@ unsigned int two_in_three_out_params_unsigned_int_return_function(  int param_in
  * This functions returns sum of param_in_one and param_in_two multiplied by 1.2.
  * To param_out_one is assigned value of param_in_one multiplied by 10 plus integer value of param_in_two.
  * To param_out_two is assigned value of param_in_one divided by 10 plus integer value of param_in_two.
- * To param_out_three is assigned value of param_in_one rounded to integer and divided by 2 plus integer value of param_in_two.
+ * To param_out_three is assigned absolute value of param_in_one divided by 2 plus integer value of param_in_two.
  *
  * @param[in] param_in_one first in param
  * @param[in] param_in_two second in param
@@ -252,7 +252,7 @@ float two_in_three_out_params_float_return_function(    int param_in_one,
  * This functions returns sum of param_in_one and param_in_two multiplied by 0.5.
  * To param_out_one is assigned value of param_in_one multiplied by 10 plus integer value of param_in_two.
  * To param_out_two is assigned value of param_in_one divided by 10 plus integer value of param_in_two.
- * To param_out_three is assigned value of param_in_one rounded to integer and divided by 2 plus integer value of param_in_two.
+ * To param_out_three is assigned absolute value of param_in_one divided by 2 plus integer value of param_in_two.
  *
  * @param[in] param_in_one first in param
  * @param[in] param_in_two second in param
@@ -272,7 +272,7 @@ double two_in_three_out_params_double_return_function(  int param_in_one,
  * This functions checks if param_in_one is greater than 10 or param_in_two is a 'p' character.
  * To param_out_one is assigned value of param_in_one multiplied by 10 plus integer value of param_in_two.
  * To param_out_two is assigned value of param_in_one divided by 10 plus integer value of param_in_two.
- * To param_out_three is assigned value of param_in_one rounded to integer and divided by 2 plus integer value of param_in_two.
+ * To param_out_three is assigned absolute value of param_in_one divided by 2 plus integer value of param_in_two.
  *
  * @param[in] param_in_one first in param
  * @param[in] param_in_two second in param
@@ -292,7 +292,7 @@ bool two_in_three_out_params_bool_return_function(  int param_in_one,
 /* -------------------- Three in, three out params ------------------------*/
 
 /**
- * Prints new line characters on console.
+ * Prints on console values of param_in_one, param_in_two, param_in_three and previous values of param_out_one, param_out_two, param_out_three.
  * To param_out_one is assigned value of param_in_one multiplied by 10 plus integer value of param_in_two if param_in_three is true.
  * To param_out_two is assigned value of param_in_one divided by 10 plus integer value of param_in_two if param_in_three is true.
  * To param_out_three is assigned value of param_in_one rounded to integer and divided by 2 plus integer value of param_in_two if param_in_three is true.
