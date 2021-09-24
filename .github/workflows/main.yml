@@ -62,6 +62,18 @@ jobs:
           cmake-version: '3.21.x'
       - name: Use cmake
         run: cmake --version
+      
+      - name: Run compilation generation
+        run: |
+         cmake -S . -B build
+         
+      - name: Run build
+        run: |
+         cmake --build build
+
+      - name: Run tests
+        run: |
+         ./build/C_samples
 
   build-c-windows:
     # The type of runner that the job will run on
@@ -78,3 +90,15 @@ jobs:
           cmake-version: '3.21.x'
       - name: Use cmake
         run: cmake --version
+        
+      - name: Run compilation generation
+        run: |
+         cmake -S . -B build
+         
+      - name: Run build
+        run: |
+         cmake --build build
+
+      - name: Run tests
+        run: |
+         build/Debug/C_samples.exe
