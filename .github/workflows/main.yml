@@ -93,7 +93,7 @@ jobs:
         
       - name: Run compilation generation
         run: |
-         cmake -S /C_samples -B C_samples/build
+         cmake -S C_samples -B C_samples/build
          
       - name: Run build
         run: |
