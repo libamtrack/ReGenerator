@@ -65,6 +65,7 @@ jobs:
       
       - name: Run compilation generation
         run: |
+         cd ./C_samples
          cmake -S . -B build
          
       - name: Run build
@@ -93,6 +94,7 @@ jobs:
         
       - name: Run compilation generation
         run: |
+         cd ./C_samples
          cmake -S . -B build
          
       - name: Run build
