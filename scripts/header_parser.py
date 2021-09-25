@@ -136,7 +136,7 @@ class Parameter:
                  description: str = ""):
         self.ord = ordinal
         self.ctype = eval(desc['ctypes_type'])
-        self.raw_type: str = re.sub(type_qualifiers, '', desc['type'])
+        self.raw_type: str = desc['raw_type'] + '*'*(desc['array'] + desc['pointer'])
         self.name = desc['name']
         self.mode = mode[1:-1].lower() if mode != '' else 'in'
         self.size = size
@@ -449,21 +449,21 @@ def generate_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
     """
     TODO
     
-    :param func_name:
-    :param params_list:
-    :return:
+    :param func_name: name of the base function
+    :param params_list: list of :class:`Parameter`, parameters of ``func_name``
+    :return: a C wrapper compatible with the .Call interface
     """
     signature = [f'SEXP {func_name}_wrapper(']
     middle = ['){', '\tSEXP RETVAL = PROTECT(AllocVector(<RETURNTYPE>, 1));']
     late = []
     call = ['\t*(<RETVAL_CONVERSION>(RETVAL)) = {}({});'
             .format(func_name, ', '.join(f'{p.name}' for p in params_list))]
-    end = ['\t UNPROTECT(1);', '\treturn RETVAL;', '}']
+    end = ['\tUNPROTECT(1);', '\treturn RETVAL;', '}']
     for param in params_list:
         signature.append(f'\tSEXP p_{param.name},')
         if param.size is None:
-            if ('*' not in param.raw_type or 
-                    ('char' in param.raw_type and param.raw_type.count('*') == 1)):
+            if (not param.raw_type.endswith('*')
+                    or param.raw_type == 'char *'):
                 middle.append(
                     '\t{0} {1} = *({2}(p_{1}));'
                     .format(param.raw_type, param.name,
