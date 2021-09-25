@@ -80,7 +80,6 @@ False
 >>> m is None
 True
 """
-
 import re
 import argparse
 import ctypes  # used by eval
@@ -94,8 +93,7 @@ from typing import Union, Literal
 
 from CppHeaderParser import CppHeader, CppMethod, CppVariable
 
-from ctype_translator import mapping
-
+from ctype_translator import mapping, SEXP_conversion
 
 #  This regex matches a doxygen description of a parameter, including:
 #  - its access mode (whether it's in/out/in,out)
@@ -116,6 +114,9 @@ param_regex = re.compile(
 array_regex = re.compile(r'array\s*of\s*(length|size)\s*(?P<lname>[a-z0-9_]+)')
 
 
+type_qualifiers = re.compile(r'volatile|const|restrict|register')
+
+
 def extract_functions_from_file(path) -> list[CppMethod]:
     try:
         return CppHeader(path).functions
@@ -134,7 +135,8 @@ class Parameter:
                  size: str = None,
                  description: str = ""):
         self.ord = ordinal
-        self.type = mapping[eval(desc['ctypes_type'])]
+        self.ctype = eval(desc['ctypes_type'])
+        self.raw_type: str = re.sub(type_qualifiers, '', desc['type'])
         self.name = desc['name']
         self.mode = mode[1:-1].lower() if mode != '' else 'in'
         self.size = size
@@ -171,7 +173,15 @@ class Parameter:
 
     @property
     def conversion(self):
-        return f'\t{self.name} <- as.{self.type}({self.name})'
+        return f'\t{self.name} <- as.{self.Rtype}({self.name})'
+
+    @property
+    def Rtype(self):
+        return mapping[self.ctype]
+    
+    @property
+    def SEXP_conversion(self):
+        return SEXP_conversion[self.ctype]
 
 
 def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, list[Parameter]]:
@@ -338,7 +348,7 @@ def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
         if param.is_out():
             if param.mode == 'out':
                 before_call.append(
-                    f'\t{param.name} <- {param.type}('
+                    f'\t{param.name} <- {param.Rtype}('
                     f'{param.size if param.size else 1})'
                 )
             after_call.append(
@@ -438,18 +448,56 @@ def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> s
 def generate_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
     """
     TODO
+    
     :param func_name:
     :param params_list:
     :return:
     """
     signature = [f'SEXP {func_name}_wrapper(']
-    middle = ['){', '\tSEXP RETVAL;']
-    end = ['\treturn RETVAL;', '}']
+    middle = ['){', '\tSEXP RETVAL = PROTECT(AllocVector(<RETURNTYPE>, 1));']
+    late = []
+    call = ['\t*(<RETVAL_CONVERSION>(RETVAL)) = {}({});'
+            .format(func_name, ', '.join(f'{p.name}' for p in params_list))]
+    end = ['\t UNPROTECT(1);', '\treturn RETVAL;', '}']
     for param in params_list:
         signature.append(f'\tSEXP p_{param.name},')
+        if param.size is None:
+            if ('*' not in param.raw_type or 
+                    ('char' in param.raw_type and param.raw_type.count('*') == 1)):
+                middle.append(
+                    '\t{0} {1} = *({2}(p_{1}));'
+                    .format(param.raw_type, param.name,
+                            param.SEXP_conversion)
+                )
+            else:
+                middle.append(
+                    '\t{0} {1} = ({0})malloc(sizeof({2}));'
+                    .format(param.raw_type, param.name, 
+                            param.raw_type.replace('*', '', 1))
+                )
+                middle.append(
+                    '\t*{0} = *({1}(p_{0}));'
+                    .format(param.name, param.SEXP_conversion)
+                )
+                call.append(f'\tfree({param.name});')
+        else:
+            middle.append(
+                '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
+                .format(param.raw_type, param.name,
+                        param.raw_type.replace('*', '', 1),
+                        param.size)
+            )
+            middle.append(
+                '\tfor(int i = 0; i < {2}; i++) {0}[i] = ({1}(p_{0}))[i];'
+                .format(param.name, param.SEXP_conversion,
+                        param.size)
+            )
+            call.append(f'\tfree({param.name});')
     return '\n'.join(
         signature
         + middle
+        + late
+        + call
         + end
     )
 
