@@ -93,7 +93,7 @@ from typing import Union, Literal
 
 from CppHeaderParser import CppHeader, CppMethod, CppVariable
 
-from ctype_translator import mapping, SEXP_conversion
+from ctype_translator import *
 
 #  This regex matches a doxygen description of a parameter, including:
 #  - its access mode (whether it's in/out/in,out)
@@ -178,7 +178,7 @@ class Parameter:
     @property
     def Rtype(self):
         return mapping[self.ctype]
-    
+
     @property
     def SEXP_conversion(self):
         return SEXP_conversion[self.ctype]
@@ -445,19 +445,26 @@ def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> s
     )
 
 
-def generate_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
+def generate_C_wrapper(func_name: str, params_list: list[Parameter], return_type: str) -> str:
     """
     TODO
     
     :param func_name: name of the base function
     :param params_list: list of :class:`Parameter`, parameters of ``func_name``
+    :param return_type: return type of the base function, e.g. ``unsigned int``
     :return: a C wrapper compatible with the .Call interface
     """
+    return_ctype = str_to_ctype(return_type)
     signature = [f'SEXP {func_name}_wrapper(']
-    middle = ['){', '\tSEXP RETVAL = PROTECT(AllocVector(<RETURNTYPE>, 1));']
+    middle = [
+        '){',
+        '\tSEXP RETVAL = PROTECT(AllocVector({}, 1));'
+        .format(type_registration[return_ctype])
+    ]
     late = []
-    call = ['\t*(<RETVAL_CONVERSION>(RETVAL)) = {}({});'
-            .format(func_name, ', '.join(f'{p.name}' for p in params_list))]
+    call = ['\t*({}(RETVAL)) = {}({});'
+            .format(SEXP_conversion[return_ctype],
+                    func_name, ', '.join(f'{p.name}' for p in params_list))]
     end = ['\tUNPROTECT(1);', '\treturn RETVAL;', '}']
     for param in params_list:
         signature.append(f'\tSEXP p_{param.name},')
@@ -472,7 +479,7 @@ def generate_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
             else:
                 middle.append(
                     '\t{0} {1} = ({0})malloc(sizeof({2}));'
-                    .format(param.raw_type, param.name, 
+                    .format(param.raw_type, param.name,
                             param.raw_type.replace('*', '', 1))
                 )
                 middle.append(
@@ -523,6 +530,8 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
     c_wrappers = []
     ret = set()
     for func in extract_functions_from_file(path):
+        func['rtnType'] = re.sub(type_qualifiers, '', func['rtnType'])
+        # we're only interested in scalar values
         try:
             absolute_path = Path(path).absolute()
             name, params = parse_function_info(func, absolute_path)
@@ -535,7 +544,7 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                     message = 'Generating .Call wrappers is not yet fully supported'
                     warnings.warn(message)
                     r_wrapper = generate_dot_Call_wrapper(name, params)
-                    c_wrapper = generate_C_wrapper(name, params)
+                    c_wrapper = generate_C_wrapper(name, params, func['rtnType'])
                     ret.add(name)
                 else:  # void func with no in params - nothing to create a wrapper for
                     message = 'void function with no out parameter won\'t create a wrapper'
