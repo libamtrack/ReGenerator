@@ -470,12 +470,17 @@ def generate_C_wrapper(func_name: str, params_list: list[Parameter], return_type
         signature.append(f'\tSEXP p_{param.name},')
         if param.size is None:
             if (not param.raw_type.endswith('*')
-                    or param.raw_type == 'char *'):
+                    or param.raw_type == 'char*'):
                 middle.append(
                     '\t{0} {1} = *({2}(p_{1}));'
                     .format(param.raw_type, param.name,
                             param.SEXP_conversion)
                 )
+            elif param.raw_type == 'char**':
+                middle.append('\tchar** {} = (char**)malloc(sizeof(char*));'
+                              .format(param.name))
+                middle.append('\t*{0} = R_CHAR(p_{0});'.format(param.name))
+                call.append(f'\tfree({param.name});')
             else:
                 middle.append(
                     '\t{0} {1} = ({0})malloc(sizeof({2}));'
@@ -494,11 +499,18 @@ def generate_C_wrapper(func_name: str, params_list: list[Parameter], return_type
                         param.raw_type.replace('*', '', 1),
                         param.size)
             )
-            middle.append(
-                '\tfor(int i = 0; i < {2}; i++) {0}[i] = ({1}(p_{0}))[i];'
-                .format(param.name, param.SEXP_conversion,
-                        param.size)
-            )
+            if param.raw_type == 'char**':
+                middle.append(
+                    '\tfor(int i = 0; i < {2}; i++) {0}[i] = R_STRING((STRING_ELT(p_{0}))[i]);'
+                    .format(param.name, param.SEXP_conversion,
+                            param.size)
+                )
+            else:
+                middle.append(
+                    '\tfor(int i = 0; i < {2}; i++) {0}[i] = ({1}(p_{0}))[i];'
+                    .format(param.name, param.SEXP_conversion,
+                            param.size)
+                )
             call.append(f'\tfree({param.name});')
     return '\n'.join(
         signature
