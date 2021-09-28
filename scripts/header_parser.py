@@ -128,6 +128,10 @@ def extract_functions_from_file(path) -> list[CppMethod]:
 
 
 class Parameter:
+    """
+    A parameter for a C function, as well as information about its doxygen
+    comment and size (if array)
+    """
     def __init__(self,
                  desc: CppVariable,
                  ordinal: int,
@@ -186,7 +190,7 @@ class Parameter:
 
 def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, list[Parameter]]:
     """
-    Extracts the name and parameters from a given CppMethod object
+    Extracts the name and parameters from a given :class:`CppMethod` object
 
     :param fun: A CppMethod extracted by robotpy-cppheaderparser
     :param abs_path: absolute path to the header file
@@ -270,25 +274,25 @@ def generate_external_call(func_name: str,
     return ''.join(ret)
 
 
-def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
+def generate_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
     """
-    Uses a function name and parameters list returned by parse_function_info
+    Uses a function name and parameters list returned by :func:`parse_function_info`
     to create an R wrapper with its .C function
 
-    Example: the function defined as follows
-    ::
+    Example: the function defined as follows::
+
         /**
          * calculates time step for balancing pressure in pipes
-         * @param         n         number of segments
-         * @param         dt        time step size
-         * @param[in]     widths    widths of pipe segments (array of length n)
-         * @param[in,out] pressures array of length n, pressures before and after
-         * @param[out]    dp        pressure changes (array of size n)
+         * @\0param         n         number of segments
+         * @\0param         dt        time step size
+         * @\0param[in]     widths    widths of pipe segments (array of length n)
+         * @\0param[in,out] pressures array of length n, pressures before and after
+         * @\0param[out]    dp        pressure changes (array of size n)
          */
         int pressure_step(const int n, const float dt, const float *widths, float *pressures, float *dp);
 
-    Will produce a wrapper like this
-    ::
+    Will produce a wrapper like this::
+
         pressure.step <- function(
             dt,
             widths,
@@ -376,21 +380,21 @@ def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
 
 def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> str:
     """
-    Uses a function name and parameters list returned by parse_function_info
+    Uses a function name and parameters list returned by :func:`parse_function_info`
     to create an R wrapper with its .Call function
 
-    Example: the function defined as follows
-    ::
+    Example: the function defined as follows::
+
         /**
          * calculates time step for balancing pressure in pipes
-         * @param n  number of items
-         * @param xs numbers to take mean of (array of length n)
-         * @return harmonic mean of xs
+         * @\0param n  number of items
+         * @\0param xs numbers to take mean of (array of length n)
+         * @\0return harmonic mean of xs
          */
         double harmonic_mean(const int n, const double *xs);
 
-    Will produce a wrapper like this
-    ::
+    Will produce a wrapper like this::
+
         harmonic.mean <- function(
             xs
         ){
@@ -447,7 +451,35 @@ def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> s
 
 def generate_C_wrapper(func_name: str, params_list: list[Parameter], return_type: str) -> str:
     """
-    TODO
+    Uses a function name, its return type and its parameters (a list of
+    :class:`Parameter`) to create a C wrapper to a C function using R's SEXP
+    type.
+
+    Example: the function defined as follows::
+
+        /**
+         * calculates time step for balancing pressure in pipes
+         * @\0param n  number of items
+         * @\0param xs numbers to take mean of (array of length n)
+         * @\0return harmonic mean of xs
+         */
+        double harmonic_mean(const int n, const double *xs);
+
+    Will produce a wrapper like this::
+
+        SEXP harmonic_mean_wrapper(
+            SEXP p_n,
+            SEXP p_xs,
+        ){
+            SEXP RETVAL = PROTECT(AllocVector(REALSXP, 1));
+            int n = *(INTEGER(p_n));
+            double* xs = (double*)malloc(sizeof(double) * n);
+            for(int i = 0; i < n; i++) xs[i] = (REAL(p_xs))[i];
+            *(REAL(RETVAL)) = harmonic_mean(n, xs);
+            free(xs);
+            UNPROTECT(1);
+            return RETVAL;
+        }
     
     :param func_name: name of the base function
     :param params_list: list of :class:`Parameter`, parameters of ``func_name``
@@ -549,7 +581,7 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
             name, params = parse_function_info(func, absolute_path)
             if namespace is None or name in namespace:
                 if sum(map(Parameter.is_out, params)) > 0:  # create a .C wrapper if there are output parameters
-                    r_wrapper = create_dot_C_wrapper(name, params)
+                    r_wrapper = generate_dot_C_wrapper(name, params)
                     c_wrapper = ''
                     ret.add(name)
                 elif func['rtnType'] != 'void':  # create a .Call/.External wrapper
