@@ -121,6 +121,7 @@ def str_to_ctype(type_: str):
 
 
 # adding pointers because we also want to cover arrays
+# we need a copy of `mapping.keys()` as we'll be modifying it
 for ctype in list(mapping.keys()):
     mapping[POINTER(ctype)] = mapping[ctype]
     type_registration[POINTER(ctype)] = type_registration[ctype]
