@@ -501,8 +501,7 @@ def generate_C_wrapper(func_name: str, params_list: list[Parameter], return_type
     for param in params_list:
         signature.append(f'\tSEXP p_{param.name},')
         if param.size is None:
-            if (not param.raw_type.endswith('*')
-                    or param.raw_type == 'char*'):
+            if (not param.raw_type.endswith('*')) or param.raw_type == 'char*':
                 middle.append(
                     '\t{0} {1} = *({2}(p_{1}));'
                     .format(param.raw_type, param.name,
@@ -579,6 +578,8 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
         try:
             absolute_path = Path(path).absolute()
             name, params = parse_function_info(func, absolute_path)
+            # in case NAMESPACE file is not provided (here `namespace is None`) we generate wrappers for all functions
+            # otherwise wrappers are generated only for functions listed in NAMESPACE file (here `name in namespace`)
             if namespace is None or name in namespace:
                 if sum(map(Parameter.is_out, params)) > 0:  # create a .C wrapper if there are output parameters
                     r_wrapper = generate_dot_C_wrapper(name, params)

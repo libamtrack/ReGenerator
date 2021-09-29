@@ -5,6 +5,8 @@ from collections import defaultdict
 __all__ = ['mapping', 'type_registration', 'SEXP_conversion', 'str_to_ctype']
 
 
+# mapping from C type to vector types ('modes') as they are seen in R
+# used for type checking (is.TYPE), conversion (as.TYPE) and construction (TYPE)
 mapping = defaultdict(lambda: 'error.type', {
     c_bool: 'logical',
     c_char: 'character',
@@ -23,6 +25,16 @@ mapping = defaultdict(lambda: 'error.type', {
 })
 
 
+# SEXPTYPE as defined in R's C API, used mainly when constructing R objects
+# from within C code
+# comprehensive list of R types can be found here: https://cran.r-project.org/doc/manuals/r-release/R-ints.html
+# in short:
+# - NILSXP: NULL (not to be confused with NA, which can appear in multiple different types)
+# - CHARSXP: internal character strings
+# - LGLSXP: logical vectors
+# - INTSXP: integer vectors
+# - REALSXP: numeric vectors
+# - RAWSXP: raw vector (i.e. a vector of unsigned bytes)
 type_registration = defaultdict(lambda: 'NILSXP', {
     c_bool: 'LGLSXP',
     c_char: 'CHARSXP',
@@ -41,6 +53,13 @@ type_registration = defaultdict(lambda: 'NILSXP', {
 })
 
 
+# Conversion functions which extract C arrays from SEXP objects
+# in short:
+# - LOGICAL: logical -> int *
+# - R_CHAR: character -> char *
+# - RAW: raw -> unsigned char *
+# - INTEGER: integer -> int *
+# - REAL: numeric -> double *
 SEXP_conversion = {
     c_bool: 'LOGICAL',
     c_char: 'R_CHAR',
@@ -59,6 +78,7 @@ SEXP_conversion = {
 }
 
 
+# simple conversion table from a c declaration to a ctypes class
 declarations_conversion = {
     'char': c_char,
     'short': c_short,
@@ -94,12 +114,13 @@ def str_to_ctype(type_: str):
         return declarations_conversion[type_]
     elif '*' in type_:
         return POINTER(str_to_ctype(type_.replace('*', '', 1)))
-    elif ' int' in type_:
-        return str_to_ctype(type_.replace(' int', ''))
+    elif 'int' in type_ and type != 'int':  # 'int' is omitted where it's not mandatory
+        return str_to_ctype(type_.replace('int', ''))
     else:
         return declarations_conversion[type_]  # will raise a KeyError that we'll want to catch later
 
 
+# adding pointers because we also want to cover arrays
 for ctype in list(mapping.keys()):
     mapping[POINTER(ctype)] = mapping[ctype]
     type_registration[POINTER(ctype)] = type_registration[ctype]
