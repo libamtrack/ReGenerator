@@ -274,7 +274,9 @@ def generate_external_call(func_name: str,
     return ''.join(ret)
 
 
-def generate_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
+def generate_dot_C_wrapper(func_name: str,
+                           params_list: list[Parameter],
+                           export=False) -> str:
     """
     Uses a function name and parameters list returned by :func:`parse_function_info`
     to create an R wrapper with its .C function
@@ -315,9 +317,11 @@ def generate_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
     :param func_name: The name of the C function
     :type func_name: str
     :param params_list: List of Parameter objects retrieved from parse_function_info
+    :param bool export: Whether the wrapper should be included in package namespace
     :return: The R wrapper for the provided C function
     :rtype: str
     """
+    docstring = ['#` @export'] if export else []
     wrapper_name = func_name.replace('_', '.')
     signature = [f'{wrapper_name} <- function(']
     center = ['){']
@@ -368,7 +372,8 @@ def generate_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
         )
 
     return '\n'.join(
-        signature
+        docstring
+        + signature
         + [',\n'.join(wrapper_params)]
         + center
         + before_call
@@ -378,7 +383,9 @@ def generate_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
     )
 
 
-def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> str:
+def generate_dot_Call_wrapper(func_name: str,
+                              params_list: list[Parameter],
+                              export=False) -> str:
     """
     Uses a function name and parameters list returned by :func:`parse_function_info`
     to create an R wrapper with its .Call function
@@ -407,9 +414,11 @@ def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> s
     :param func_name: The name of the C function
     :type func_name: str
     :param params_list: List of Parameter objects retrieved from parse_function_info
+    :param bool export: Whether the wrapper should be included in package namespace
     :return: The R wrapper for the provided C function
     :rtype: str
     """
+    docstring = ['#` @export'] if export else []
     wrapper_name = func_name.replace('_', '.')
     signature = [f'{wrapper_name} <- function(']
     wrapper_params = []
@@ -439,7 +448,8 @@ def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> s
                 )
             )
     return '\n'.join(
-        signature
+        docstring
+        + signature
         + wrapper_params
         + center
         + type_conversions
@@ -554,8 +564,9 @@ def generate_C_wrapper(func_name: str, params_list: list[Parameter], return_type
 
 def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                                     out_dir: str,
-                                    include_dir: str,
-                                    namespace: Collection[str] = None):
+                                    include_dir: Union[str, PathLike[str]],
+                                    namespace: Collection[str] = None,
+                                    exp_namespace: Collection[str] = None):
     """
     Reads a given header file and creates R and (eventually) C wrappers
     for the functions defined inside.
@@ -564,6 +575,7 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
     :param path: path to the C header file
     :param out_dir: where to create files with wrappers
     :param namespace: functions for which we want wrappers to be created
+    :param exp_namespace: functions which we want to export in final package
     :return:
     """
     Path(out_dir).mkdir(parents=True, exist_ok=True)
@@ -581,8 +593,10 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
             # in case NAMESPACE file is not provided (here `namespace is None`) we generate wrappers for all functions
             # otherwise wrappers are generated only for functions listed in NAMESPACE file (here `name in namespace`)
             if namespace is None or name in namespace:
-                if sum(map(Parameter.is_out, params)) > 0:  # create a .C wrapper if there are output parameters
-                    r_wrapper = generate_dot_C_wrapper(name, params)
+                # likewise, if no NAMESPACE file is provided, we export all functions
+                export = exp_namespace is None or name in exp_namespace
+                if any(map(Parameter.is_out, params)):  # create a .C wrapper if there are output parameters
+                    r_wrapper = generate_dot_C_wrapper(name, params, export)
                     c_wrapper = ''
                     ret.add(name)
                 elif func['rtnType'] != 'void':  # create a .Call/.External wrapper
@@ -650,7 +664,7 @@ def read_namespace(path: str) -> Union[tuple[None, None], tuple[set[str], set[st
             wrapper.add(name[4:])
         else:
             wrapper.add(name)
-            export.add(name.replace('_', '.'))
+            export.add(name)
     return export, wrapper
 
 
@@ -667,7 +681,7 @@ def main():
                         help='path to project namespace file (default ./NAMESPACE)',
                         default='./NAMESPACE')
     args = parser.parse_args()
-    _, gen_wrapper = read_namespace(args.namespace)
+    exp_wrapper, gen_wrapper = read_namespace(args.namespace)
 
     infiles = [Path(p).absolute() for p in args.infile]
     if len(infiles) > 1:
@@ -676,7 +690,7 @@ def main():
         include_dir = infiles[0].parent
 
     for infile in infiles:
-        create_wrappers_for_header_file(infile, args.out_dir, include_dir, gen_wrapper)
+        create_wrappers_for_header_file(infile, args.out_dir, include_dir, gen_wrapper, exp_wrapper)
 
 
 if __name__ == '__main__':
