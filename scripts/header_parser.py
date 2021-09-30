@@ -89,7 +89,7 @@ from os.path import commonpath
 from sys import stderr
 from pathlib import Path, PurePosixPath, PurePath
 from collections.abc import Collection
-from typing import Union, Literal
+from typing import Union, Literal, TextIO
 
 from CppHeaderParser import CppHeader, CppMethod, CppVariable
 
@@ -115,6 +115,10 @@ array_regex = re.compile(r'array\s*of\s*(length|size)\s*(?P<lname>[a-z0-9_]+)')
 
 
 type_qualifiers = re.compile(r'volatile|const|restrict|register')
+
+
+#  Any amount of whitespace, if followed by a '('
+function_name_end = re.compile(r'\s*(?=\()')
 
 
 def extract_functions_from_file(path) -> list[CppMethod]:
@@ -451,7 +455,7 @@ def generate_dot_Call_wrapper(func_name: str,
     return '\n'.join(
         docstring
         + signature
-        + wrapper_params
+        + [',\n'.join(wrapper_params)]
         + center
         + type_conversions
         + size_derivations
@@ -568,6 +572,7 @@ def generate_C_wrapper(func_name: str,
 def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                                     out_dir: str,
                                     include_dir: Union[str, PathLike[str]],
+                                    init_file: TextIO,
                                     namespace: Collection[str] = None,
                                     exp_namespace: Collection[str] = None):
     """
@@ -577,15 +582,17 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
     :param include_dir: root directory for all header files
     :param path: path to the C header file
     :param out_dir: where to create files with wrappers
+    :param init_file: path to ``init.c``, which is where symbol registration
+        for R interaction typically resides
     :param namespace: functions for which we want wrappers to be created
     :param exp_namespace: functions which we want to export in final package
-    :return:
     """
-    Path(out_dir).mkdir(parents=True, exist_ok=True)
-    r_out_path = Path(out_dir, Path(path).name.replace('.h', '.R'))
-    c_out_path = Path(out_dir, Path(path).name.replace('.h', '_wrappers.c'))
+    Path(out_dir, 'R').mkdir(parents=True, exist_ok=True)
+    r_out_path = Path(out_dir, 'R', Path(path).name.replace('.h', '.R'))
+    c_out_path = Path(out_dir, 'src', Path(path).name.replace('.h', '_wrappers.c'))
     r_wrappers = []
     c_wrappers = []
+
     ret = set()
     for func in extract_functions_from_file(path):
         func['rtnType'] = re.sub(type_qualifiers, '', func['rtnType'])
@@ -602,12 +609,23 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                     r_wrapper = generate_dot_C_wrapper(name, params, export)
                     c_wrapper = ''
                     ret.add(name)
+                    print('extern', func['debug'], file=init_file)
                 elif func['rtnType'] != 'void':  # create a .Call/.External wrapper
                     r_wrapper = generate_dot_Call_wrapper(name, params, export)
                     c_wrapper = generate_C_wrapper(name, params, func['rtnType'])
                     ret.add(name)
+                    print(
+                        'extern',
+                        re.sub(function_name_end, '_wrapper', func['debug'], 1),
+                        file=init_file
+                    )
                 else:  # void func with no in params - nothing to create a wrapper for
-                    message = 'void function with no out parameter won\'t create a wrapper'
+                    message = (
+                        '{}:{}: void function `{}` with no out '
+                        'parameter won\'t create a wrapper'
+                        .format(Path(path).relative_to(include_dir),
+                                func['line_number'], func['name'])
+                    )
                     logging.info(message)
                     r_wrapper = c_wrapper = ''
 
@@ -636,7 +654,6 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
         except IOError as e:
             message = f'Can\'t write C wrappers to {c_out_path}: {e}'
             logging.critical(message)
-    return ret
 
 
 def read_namespace(path: str) -> Union[tuple[None, None], tuple[set[str], set[str]]]:
@@ -702,8 +719,21 @@ def main():
     else:
         include_dir = infiles[0].parent
 
-    for infile in infiles:
-        create_wrappers_for_header_file(infile, args.out_dir, include_dir, gen_wrapper, exp_wrapper)
+    c_path = Path(args.out_dir, 'src')
+    c_path.mkdir(exist_ok=True, parents=True)
+    try:
+        with open(c_path / 'init.c', 'w') as project_base:
+            print("#include<stdbool.h>", file=project_base)
+            print("#include<stdint.h>", file=project_base)
+            print("#include<Rinternals.h>", file=project_base)
+            print("#include<R_ext/Rdynload.h>", file=project_base)
+            for infile in infiles:
+                create_wrappers_for_header_file(
+                    infile, args.out_dir, include_dir, project_base,
+                    gen_wrapper, exp_wrapper
+                )
+    except IOError as e:
+        logging.critical(f'Can\'t open {c_path / "init.c"}: {e}')
 
 
 if __name__ == '__main__':
