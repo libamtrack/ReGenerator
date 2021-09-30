@@ -90,6 +90,7 @@ declarations_conversion = {
     'unsigned int': c_uint,
     'unsigned long': c_ulong,
     'unsigned long long': c_ulonglong,
+    'bool': c_bool,
 
     'float': c_float,
     'double': c_double,

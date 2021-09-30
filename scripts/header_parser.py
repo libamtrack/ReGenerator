@@ -291,7 +291,10 @@ def generate_dot_C_wrapper(func_name: str,
          * @\0param[in,out] pressures array of length n, pressures before and after
          * @\0param[out]    dp        pressure changes (array of size n)
          */
-        int pressure_step(const int n, const float dt, const float *widths, float *pressures, float *dp);
+        int pressure_step(
+            const int n, const float dt,
+            const float *widths,
+            float *pressures, float *dp);
 
     Will produce a wrapper like this::
 
@@ -314,8 +317,7 @@ def generate_dot_C_wrapper(func_name: str,
             return(AUTO_RETVAL)
         }
 
-    :param func_name: The name of the C function
-    :type func_name: str
+    :param str func_name: The name of the C function
     :param params_list: List of Parameter objects retrieved from parse_function_info
     :param bool export: Whether the wrapper should be included in package namespace
     :return: The R wrapper for the provided C function
@@ -411,8 +413,7 @@ def generate_dot_Call_wrapper(func_name: str,
             return(.Call("harmonic_mean_wrapper", n, xs))
         }
 
-    :param func_name: The name of the C function
-    :type func_name: str
+    :param str func_name: The name of the C function
     :param params_list: List of Parameter objects retrieved from parse_function_info
     :param bool export: Whether the wrapper should be included in package namespace
     :return: The R wrapper for the provided C function
@@ -459,7 +460,9 @@ def generate_dot_Call_wrapper(func_name: str,
     )
 
 
-def generate_C_wrapper(func_name: str, params_list: list[Parameter], return_type: str) -> str:
+def generate_C_wrapper(func_name: str,
+                       params_list: list[Parameter],
+                       return_type: str) -> str:
     """
     Uses a function name, its return type and its parameters (a list of
     :class:`Parameter`) to create a C wrapper to a C function using R's SEXP
@@ -600,9 +603,7 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                     c_wrapper = ''
                     ret.add(name)
                 elif func['rtnType'] != 'void':  # create a .Call/.External wrapper
-                    message = 'Generating .Call wrappers is not yet fully supported'
-                    warnings.warn(message)
-                    r_wrapper = generate_dot_Call_wrapper(name, params)
+                    r_wrapper = generate_dot_Call_wrapper(name, params, export)
                     c_wrapper = generate_C_wrapper(name, params, func['rtnType'])
                     ret.add(name)
                 else:  # void func with no in params - nothing to create a wrapper for
@@ -613,7 +614,8 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                 r_wrappers.append(r_wrapper)
                 c_wrappers.append(c_wrapper)
         except Exception as e:
-            print(e, file=stderr)
+            message = f'{path}: {type(e)} while creating wrapper for {func}: {e}'
+            print(message, file=stderr)
 
     if any(r_wrappers):  # only create the file if there's anything to write
         try:
