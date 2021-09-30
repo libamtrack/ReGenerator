@@ -80,14 +80,14 @@ False
 >>> m is None
 True
 """
+import logging
 import re
 import argparse
 import ctypes  # used by eval
-import warnings
 from os import PathLike
 from os.path import commonpath
 from sys import stderr
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePosixPath, PurePath
 from collections.abc import Collection
 from typing import Union, Literal
 
@@ -608,14 +608,14 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                     ret.add(name)
                 else:  # void func with no in params - nothing to create a wrapper for
                     message = 'void function with no out parameter won\'t create a wrapper'
-                    warnings.warn(message)
+                    logging.info(message)
                     r_wrapper = c_wrapper = ''
 
                 r_wrappers.append(r_wrapper)
                 c_wrappers.append(c_wrapper)
         except Exception as e:
             message = f'{path}: {type(e)} while creating wrapper for {func}: {e}'
-            print(message, file=stderr)
+            logging.error(message)
 
     if any(r_wrappers):  # only create the file if there's anything to write
         try:
@@ -623,7 +623,8 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
             with open(r_out_path, 'w', encoding='utf-8') as fout:
                 print('\n\n\n'.join(filter(None, r_wrappers)), file=fout)
         except IOError as e:
-            print(e, file=stderr)
+            message = f'Can\'t write R wrappers to {r_out_path}: {e}'
+            logging.critical(message)
 
     if any(c_wrappers):
         try:
@@ -633,7 +634,8 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                 print(f'#include "{c_include_filename}"', end='\n\n\n', file=fout)
                 print('\n\n\n'.join(filter(None, c_wrappers)), file=fout)
         except IOError as e:
-            print(e, file=stderr)
+            message = f'Can\'t write C wrappers to {c_out_path}: {e}'
+            logging.critical(message)
     return ret
 
 
@@ -654,8 +656,8 @@ def read_namespace(path: str) -> Union[tuple[None, None], tuple[set[str], set[st
         with open(path, 'r', encoding='utf-8') as fin:
             names = fin.readlines()
     except IOError:
-        print("Couldn't retrieve namespace file \"{}\", assuming all functions"
-              .format(Path(path).absolute()), file=stderr)
+        message = 'Couldn\'t retrieve namespace file "{}", assuming all functions'
+        logging.warning(message.format(Path(path).absolute()))
         return None, None
     names = map(lambda x: re.sub(r'#.*$', '', x).strip(), names)  # remove comments
     names = filter(None, names)  # remove empty lines
@@ -682,7 +684,16 @@ def main():
     parser.add_argument('-n', dest='namespace', metavar='namespace',
                         help='path to project namespace file (default ./NAMESPACE)',
                         default='./NAMESPACE')
+    parser.add_argument('-l', dest='log_file', metavar='logfile',
+                        help='Redirect logging information to logfile instead of stderr',
+                        default=None)
     args = parser.parse_args()
+
+    if args.log_file:
+        logging.basicConfig(filename=args.log_file, level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.DEBUG, stream=stderr)
+
     exp_wrapper, gen_wrapper = read_namespace(args.namespace)
 
     infiles = [Path(p).absolute() for p in args.infile]
