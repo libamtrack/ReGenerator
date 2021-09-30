@@ -80,20 +80,20 @@ False
 >>> m is None
 True
 """
-
 import re
 import argparse
 import ctypes  # used by eval
 import warnings
+from os import PathLike
+from os.path import commonpath
 from sys import stderr
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from collections.abc import Collection
 from typing import Union, Literal
 
 from CppHeaderParser import CppHeader, CppMethod, CppVariable
 
-from ctype_translator import mapping
-
+from ctype_translator import *
 
 #  This regex matches a doxygen description of a parameter, including:
 #  - its access mode (whether it's in/out/in,out)
@@ -114,6 +114,9 @@ param_regex = re.compile(
 array_regex = re.compile(r'array\s*of\s*(length|size)\s*(?P<lname>[a-z0-9_]+)')
 
 
+type_qualifiers = re.compile(r'volatile|const|restrict|register')
+
+
 def extract_functions_from_file(path) -> list[CppMethod]:
     try:
         return CppHeader(path).functions
@@ -125,6 +128,10 @@ def extract_functions_from_file(path) -> list[CppMethod]:
 
 
 class Parameter:
+    """
+    A parameter for a C function, as well as information about its doxygen
+    comment and size (if array)
+    """
     def __init__(self,
                  desc: CppVariable,
                  ordinal: int,
@@ -132,7 +139,8 @@ class Parameter:
                  size: str = None,
                  description: str = ""):
         self.ord = ordinal
-        self.type = mapping[eval(desc['ctypes_type'])]
+        self.ctype = eval(desc['ctypes_type'])
+        self.raw_type: str = desc['raw_type'] + '*'*(desc['array'] + desc['pointer'])
         self.name = desc['name']
         self.mode = mode[1:-1].lower() if mode != '' else 'in'
         self.size = size
@@ -169,12 +177,20 @@ class Parameter:
 
     @property
     def conversion(self):
-        return f'\t{self.name} <- as.{self.type}({self.name})'
+        return f'\t{self.name} <- as.{self.Rtype}({self.name})'
+
+    @property
+    def Rtype(self):
+        return mapping[self.ctype]
+
+    @property
+    def SEXP_conversion(self):
+        return SEXP_conversion[self.ctype]
 
 
 def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, list[Parameter]]:
     """
-    Extracts the name and parameters from a given CppMethod object
+    Extracts the name and parameters from a given :class:`CppMethod` object
 
     :param fun: A CppMethod extracted by robotpy-cppheaderparser
     :param abs_path: absolute path to the header file
@@ -258,25 +274,25 @@ def generate_external_call(func_name: str,
     return ''.join(ret)
 
 
-def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
+def generate_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
     """
-    Uses a function name and parameters list returned by parse_function_info
+    Uses a function name and parameters list returned by :func:`parse_function_info`
     to create an R wrapper with its .C function
 
-    Example: the function defined as follows
-    ::
+    Example: the function defined as follows::
+
         /**
          * calculates time step for balancing pressure in pipes
-         * @param         n         number of segments
-         * @param         dt        time step size
-         * @param[in]     widths    widths of pipe segments (array of length n)
-         * @param[in,out] pressures array of length n, pressures before and after
-         * @param[out]    dp        pressure changes (array of size n)
+         * @\0param         n         number of segments
+         * @\0param         dt        time step size
+         * @\0param[in]     widths    widths of pipe segments (array of length n)
+         * @\0param[in,out] pressures array of length n, pressures before and after
+         * @\0param[out]    dp        pressure changes (array of size n)
          */
         int pressure_step(const int n, const float dt, const float *widths, float *pressures, float *dp);
 
-    Will produce a wrapper like this
-    ::
+    Will produce a wrapper like this::
+
         pressure.step <- function(
             dt,
             widths,
@@ -336,7 +352,7 @@ def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
         if param.is_out():
             if param.mode == 'out':
                 before_call.append(
-                    f'\t{param.name} <- {param.type}('
+                    f'\t{param.name} <- {param.Rtype}('
                     f'{param.size if param.size else 1})'
                 )
             after_call.append(
@@ -364,21 +380,21 @@ def create_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
 
 def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> str:
     """
-    Uses a function name and parameters list returned by parse_function_info
+    Uses a function name and parameters list returned by :func:`parse_function_info`
     to create an R wrapper with its .Call function
 
-    Example: the function defined as follows
-    ::
+    Example: the function defined as follows::
+
         /**
          * calculates time step for balancing pressure in pipes
-         * @param n  number of items
-         * @param xs numbers to take mean of (array of length n)
-         * @return harmonic mean of xs
+         * @\0param n  number of items
+         * @\0param xs numbers to take mean of (array of length n)
+         * @\0return harmonic mean of xs
          */
         double harmonic_mean(const int n, const double *xs);
 
-    Will produce a wrapper like this
-    ::
+    Will produce a wrapper like this::
+
         harmonic.mean <- function(
             xs
         ){
@@ -433,13 +449,118 @@ def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> s
     )
 
 
-def create_wrappers_for_header_file(path: str,
+def generate_C_wrapper(func_name: str, params_list: list[Parameter], return_type: str) -> str:
+    """
+    Uses a function name, its return type and its parameters (a list of
+    :class:`Parameter`) to create a C wrapper to a C function using R's SEXP
+    type.
+
+    Example: the function defined as follows::
+
+        /**
+         * calculates time step for balancing pressure in pipes
+         * @\0param n  number of items
+         * @\0param xs numbers to take mean of (array of length n)
+         * @\0return harmonic mean of xs
+         */
+        double harmonic_mean(const int n, const double *xs);
+
+    Will produce a wrapper like this::
+
+        SEXP harmonic_mean_wrapper(
+            SEXP p_n,
+            SEXP p_xs,
+        ){
+            SEXP RETVAL = PROTECT(AllocVector(REALSXP, 1));
+            int n = *(INTEGER(p_n));
+            double* xs = (double*)malloc(sizeof(double) * n);
+            for(int i = 0; i < n; i++) xs[i] = (REAL(p_xs))[i];
+            *(REAL(RETVAL)) = harmonic_mean(n, xs);
+            free(xs);
+            UNPROTECT(1);
+            return RETVAL;
+        }
+    
+    :param func_name: name of the base function
+    :param params_list: list of :class:`Parameter`, parameters of ``func_name``
+    :param return_type: return type of the base function, e.g. ``unsigned int``
+    :return: a C wrapper compatible with the .Call interface
+    """
+    return_ctype = str_to_ctype(return_type)
+    signature = [f'SEXP {func_name}_wrapper(']
+    middle = [
+        '){',
+        '\tSEXP RETVAL = PROTECT(AllocVector({}, 1));'
+        .format(type_registration[return_ctype])
+    ]
+    late = []
+    call = ['\t*({}(RETVAL)) = {}({});'
+            .format(SEXP_conversion[return_ctype],
+                    func_name, ', '.join(f'{p.name}' for p in params_list))]
+    end = ['\tUNPROTECT(1);', '\treturn RETVAL;', '}']
+    for param in params_list:
+        signature.append(f'\tSEXP p_{param.name},')
+        if param.size is None:
+            if (not param.raw_type.endswith('*')) or param.raw_type == 'char*':
+                middle.append(
+                    '\t{0} {1} = *({2}(p_{1}));'
+                    .format(param.raw_type, param.name,
+                            param.SEXP_conversion)
+                )
+            elif param.raw_type == 'char**':
+                middle.append('\tchar** {} = (char**)malloc(sizeof(char*));'
+                              .format(param.name))
+                middle.append('\t*{0} = R_CHAR(p_{0});'.format(param.name))
+                call.append(f'\tfree({param.name});')
+            else:
+                middle.append(
+                    '\t{0} {1} = ({0})malloc(sizeof({2}));'
+                    .format(param.raw_type, param.name,
+                            param.raw_type.replace('*', '', 1))
+                )
+                middle.append(
+                    '\t*{0} = *({1}(p_{0}));'
+                    .format(param.name, param.SEXP_conversion)
+                )
+                call.append(f'\tfree({param.name});')
+        else:
+            middle.append(
+                '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
+                .format(param.raw_type, param.name,
+                        param.raw_type.replace('*', '', 1),
+                        param.size)
+            )
+            if param.raw_type == 'char**':
+                middle.append(
+                    '\tfor(int i = 0; i < {2}; i++) {0}[i] = R_STRING((STRING_ELT(p_{0}))[i]);'
+                    .format(param.name, param.SEXP_conversion,
+                            param.size)
+                )
+            else:
+                middle.append(
+                    '\tfor(int i = 0; i < {2}; i++) {0}[i] = ({1}(p_{0}))[i];'
+                    .format(param.name, param.SEXP_conversion,
+                            param.size)
+                )
+            call.append(f'\tfree({param.name});')
+    return '\n'.join(
+        signature
+        + middle
+        + late
+        + call
+        + end
+    )
+
+
+def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                                     out_dir: str,
+                                    include_dir: str,
                                     namespace: Collection[str] = None):
     """
     Reads a given header file and creates R and (eventually) C wrappers
     for the functions defined inside.
 
+    :param include_dir: root directory for all header files
     :param path: path to the C header file
     :param out_dir: where to create files with wrappers
     :param namespace: functions for which we want wrappers to be created
@@ -452,19 +573,23 @@ def create_wrappers_for_header_file(path: str,
     c_wrappers = []
     ret = set()
     for func in extract_functions_from_file(path):
-        absolute_path = Path(path).absolute()
-        name, params = parse_function_info(func, absolute_path)
-        if namespace is None or name in namespace:
-            try:
+        func['rtnType'] = re.sub(type_qualifiers, '', func['rtnType'])
+        # we're only interested in scalar values
+        try:
+            absolute_path = Path(path).absolute()
+            name, params = parse_function_info(func, absolute_path)
+            # in case NAMESPACE file is not provided (here `namespace is None`) we generate wrappers for all functions
+            # otherwise wrappers are generated only for functions listed in NAMESPACE file (here `name in namespace`)
+            if namespace is None or name in namespace:
                 if sum(map(Parameter.is_out, params)) > 0:  # create a .C wrapper if there are output parameters
-                    r_wrapper = create_dot_C_wrapper(name, params)
+                    r_wrapper = generate_dot_C_wrapper(name, params)
                     c_wrapper = ''
                     ret.add(name)
                 elif func['rtnType'] != 'void':  # create a .Call/.External wrapper
                     message = 'Generating .Call wrappers is not yet fully supported'
                     warnings.warn(message)
                     r_wrapper = generate_dot_Call_wrapper(name, params)
-                    c_wrapper = ''
+                    c_wrapper = generate_C_wrapper(name, params, func['rtnType'])
                     ret.add(name)
                 else:  # void func with no in params - nothing to create a wrapper for
                     message = 'void function with no out parameter won\'t create a wrapper'
@@ -473,8 +598,8 @@ def create_wrappers_for_header_file(path: str,
 
                 r_wrappers.append(r_wrapper)
                 c_wrappers.append(c_wrapper)
-            except Exception as e:
-                print(e, file=stderr)
+        except Exception as e:
+            print(e, file=stderr)
 
     if any(r_wrappers):  # only create the file if there's anything to write
         try:
@@ -487,7 +612,9 @@ def create_wrappers_for_header_file(path: str,
     if any(c_wrappers):
         try:
             with open(c_out_path, 'w', encoding='utf-8') as fout:
-                print('#include <Rinternals.h>', end='\n\n\n', file=fout)
+                print('#include <Rinternals.h>', file=fout)
+                c_include_filename = PurePosixPath(path).relative_to(PurePosixPath(include_dir))
+                print(f'#include "{c_include_filename}"', end='\n\n\n', file=fout)
                 print('\n\n\n'.join(filter(None, c_wrappers)), file=fout)
         except IOError as e:
             print(e, file=stderr)
@@ -541,8 +668,15 @@ def main():
                         default='./NAMESPACE')
     args = parser.parse_args()
     _, gen_wrapper = read_namespace(args.namespace)
-    for infile in args.infile:
-        create_wrappers_for_header_file(infile, args.out_dir, gen_wrapper)
+
+    infiles = [Path(p).absolute() for p in args.infile]
+    if len(infiles) > 1:
+        include_dir = Path(commonpath(infiles))
+    else:
+        include_dir = infiles[0].parent
+
+    for infile in infiles:
+        create_wrappers_for_header_file(infile, args.out_dir, include_dir, gen_wrapper)
 
 
 if __name__ == '__main__':
