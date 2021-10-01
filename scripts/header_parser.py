@@ -632,7 +632,7 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                 r_wrappers.append(r_wrapper)
                 c_wrappers.append(c_wrapper)
         except Exception as e:
-            message = f'{path}: {type(e)} while creating wrapper for {func}: {e}'
+            message = f'{path}: {type(e)} while creating wrapper for {func["name"]}: {e}'
             logging.error(message)
 
     if any(r_wrappers):  # only create the file if there's anything to write
