@@ -695,21 +695,33 @@ def main():
     )
     parser.add_argument('infile', nargs='+',
                         help='C header files to be parsed')
-    parser.add_argument('-o', dest='out_dir', metavar='output_dir',
+    parser.add_argument('-o', '--out-dir', dest='out_dir', metavar='output_dir',
                         help='directory to write wrappers to, (default ./out)',
                         default='./out')
-    parser.add_argument('-n', dest='namespace', metavar='namespace',
+    parser.add_argument('-n', '--namespace', dest='namespace', metavar='namespace',
                         help='path to project namespace file (default ./NAMESPACE)',
                         default='./NAMESPACE')
-    parser.add_argument('-l', dest='log_file', metavar='logfile',
+    parser.add_argument('-l', '--log-file', dest='log_file', metavar='logfile',
                         help='Redirect logging information to logfile instead of stderr',
                         default=None)
+    parser.add_argument('-v', '--verbose', dest='verbose', action='count',
+                        help='Log more information, can be stacked up to 2 times. '
+                        'Concels out with -q', default=0)
+    parser.add_argument('-q', '--quiet', dest='quiet', action='count',
+                        help='Log less information, can be stacked up to 2 times. '
+                        'Cancels out with -v', default=0)
     args = parser.parse_args()
 
+    verbosity = min(5, max(0, 2+args.verbose-args.quiet))
+    verbosity_levels = [logging.CRITICAL, logging.ERROR,
+                        logging.WARNING, logging.INFO, logging.NOTSET]
+    logger_settings = {'level': verbosity_levels[verbosity]}
     if args.log_file:
-        logging.basicConfig(filename=args.log_file, level=logging.DEBUG)
+        logger_settings['file'] = args.log_file
     else:
-        logging.basicConfig(level=logging.DEBUG, stream=stderr)
+        logger_settings['stream'] = stderr
+
+    logging.basicConfig(**logger_settings)
 
     exp_wrapper, gen_wrapper = read_namespace(args.namespace)
 
