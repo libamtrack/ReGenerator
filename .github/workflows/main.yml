@@ -41,11 +41,16 @@ jobs:
       - name: Test prototype generator
         run: |
          python scripts/header_parser.py C_samples/*.h
-         test -e out/multiple_in_out_params_sample.R
-         test -e out/one_in_one_out_param_sample.R
-         test -e out/only_out_params_sample.R
-         test -e out/no_params_sample.R
-         test -e out/only_in_params_sample.R
+         test -e out/R/multiple_in_out_params_sample.R
+         test -e out/R/one_in_one_out_param_sample.R
+         test -e out/R/only_out_params_sample.R
+         test -e out/R/no_params_sample.R
+         test -e out/R/only_in_params_sample.R
+         test -e out/R/tables_params_sample.R
+         test -e out/src/init.c
+         test -e out/src/no_params_sample_wrappers.c
+         test -e out/src/only_in_params_sample_wrappers.c
+         test -e out/src/tables_params_sample_wrappers.c
 
   build-c-ubuntu:
     # The type of runner that the job will run on
