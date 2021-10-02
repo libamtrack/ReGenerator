@@ -34,6 +34,7 @@ mapping = defaultdict(lambda: 'error.type', {
 # - LGLSXP: logical vectors
 # - INTSXP: integer vectors
 # - REALSXP: numeric vectors
+# - SINGLESXP: single precision numeric vectors
 # - RAWSXP: raw vector (i.e. a vector of unsigned bytes)
 type_registration = defaultdict(lambda: 'NILSXP', {
     c_bool: 'LGLSXP',
@@ -47,7 +48,7 @@ type_registration = defaultdict(lambda: 'NILSXP', {
     c_uint16: 'INTSXP',
     c_uint32: 'INTSXP',
     c_uint64: 'INTSXP',
-    c_float: 'REALSXP',
+    c_float: 'SINGLESXP',
     c_double: 'REALSXP',
     c_void_p: 'RAWSXP'
 })
