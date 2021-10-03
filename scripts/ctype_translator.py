@@ -2,7 +2,7 @@ from ctypes import *
 from collections import defaultdict
 
 
-__all__ = ['mapping', 'type_registration', 'SEXP_conversion', 'str_to_ctype']
+__all__ = ['mapping', 'type_registration', 'SEXP_conversion', 'str_to_ctype', 'dot_C_conversions']
 
 
 # mapping from C type to vector types ('modes') as they are seen in R
@@ -70,12 +70,23 @@ SEXP_conversion = {
     c_int16: 'INTEGER',
     c_int32: 'INTEGER',
     c_int64: 'INTEGER',
-    c_uint16: 'INTEGER',
-    c_uint32: 'INTEGER',
-    c_uint64: 'INTEGER',
+    c_uint16: 'INTEGER',  # note that integers in R are ALWAYS signed, so passing
+    c_uint32: 'INTEGER',  # negative numbers to a function that takes unsigned
+    c_uint64: 'INTEGER',  # integers as parameters will result in undefined behavior
     c_float: 'REAL',
     c_double: 'REAL',
     c_void_p: 'RAW'
+}
+
+
+# a dictionary of how (as what c type) each vector type is passed to .C
+dot_C_conversions = {
+    'integer': 'int *',
+    'double': 'double *',
+    'single': 'float *',
+    'logical': 'int *',
+    'character': 'char **',
+    'raw': 'unsigned char *',
 }
 
 

@@ -121,16 +121,6 @@ type_qualifiers = re.compile(r'volatile|const|restrict|register')
 function_name_end = re.compile(r'\s*(?=\()')
 
 
-def extract_functions_from_file(path) -> list[CppMethod]:
-    try:
-        return CppHeader(path).functions
-    except IOError:
-        raise
-    except (TypeError, ValueError, AttributeError) as e:
-        message = f'{path} is not a valid C/C++ header file'
-        raise ValueError(message) from e
-
-
 class Parameter:
     """
     A parameter for a C function, as well as information about its doxygen
@@ -190,6 +180,20 @@ class Parameter:
     @property
     def SEXP_conversion(self):
         return SEXP_conversion[self.ctype]
+
+    @property
+    def SEXPTYPE(self):
+        return type_registration[self.ctype]
+
+
+def extract_functions_from_file(path) -> list[CppMethod]:
+    try:
+        return CppHeader(path).functions
+    except IOError:
+        raise
+    except (TypeError, ValueError, AttributeError) as e:
+        message = f'{path} is not a valid C/C++ header file'
+        raise ValueError(message) from e
 
 
 def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, list[Parameter]]:
@@ -625,15 +629,18 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                     r_wrapper = generate_dot_C_wrapper(name, params, export)
                     c_wrapper = ''
                     ret.add(name)
-                    print('extern', func['debug'], file=init_file)
+
+                    print('extern void', name + '_wrapper', '(',
+                          ', '.join(dot_C_conversions[p.Rtype] for p in params),
+                          ');', file=init_file)
                     dot_c_functions.append((name + '_wrapper', params))
                 elif func['rtnType'] != 'void':  # create a .Call/.External wrapper
                     r_wrapper = generate_dot_Call_wrapper(name, params, export)
                     c_wrapper = generate_C_wrapper_dot_Call(name, params, func['rtnType'])
                     ret.add(name)
                     print(
-                        'extern',
-                        re.sub(function_name_end, '_wrapper', func['debug'], 1),
+                        'extern SEXP', name + '_wrapper', '(',
+                        ', '.join(['SEXP'] * len(params)), ');',
                         file=init_file
                     )
                     dot_call_functions.append((name + '_wrapper', len(params)))
@@ -665,8 +672,7 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
     if any(c_wrappers):
         try:
             with open(c_out_path, 'w', encoding='utf-8') as fout:
-                print('#include <Rinternals.h>', file=fout)
-                print('#include <R_ext/Rdynload.h>', file=fout)
+                write_cpp_directives(fout)
                 c_include_filename = PurePosixPath(path).relative_to(PurePosixPath(include_dir))
                 print(f'#include "{c_include_filename}"', end='\n\n\n', file=fout)
                 print('\n\n\n'.join(filter(None, c_wrappers)), file=fout)
@@ -708,6 +714,59 @@ def read_namespace(path: str) -> Union[tuple[None, None], tuple[set[str], set[st
             wrapper.add(name)
             export.add(name)
     return export, wrapper
+
+
+def register_symbols(project_base: TextIO,
+                     dot_Call_funs: list[tuple[str, int]],
+                     dot_C_funcs: list[tuple[str, list[Parameter]]]) -> None:
+    """
+    Writes C code responsible for registering symbols in R when loading
+    the library file, allowing for fast lookup of relevant functions
+
+    :param project_base: init.c file stream
+    :param dot_Call_funs: names and numbers of parameters
+        of functions used in .Call calls
+    :param dot_C_funcs: names and parameters of functions used in .C calls
+    """
+
+    # wrappers used in .C calls
+    dot_C_registrations = []
+    for name, args in dot_C_funcs:
+        print('R_NativePrimitiveArgType  ', name, '_args[] = {',
+              ', '.join(arg.SEXPTYPE for arg in args),
+              '};', sep='', file=project_base)
+        dot_C_registrations.append(f'\tC_DECL({name}, {len(args)}),')
+
+    print('\nR_CMethodDef cMethods[] = {', file=project_base)
+    print('\n'.join(dot_C_registrations), file=project_base)
+    print('\t{NULL, NULL, 0, NULL}', '};',
+          sep='\n', end='\n\n', file=project_base)
+
+    # wrappers used in .Call calls
+    print('R_CallMethodDef callMethods[] = {', file=project_base)
+    for name, n in dot_Call_funs:
+        print(f'\tCALL_DECL({name}, {n}),', file=project_base)
+    print('\t{NULL, NULL, 0}', file=project_base)
+    print('};', file=project_base, end='\n\n')
+    print('void R_init_lib(DllInfo *info){R_registerRoutines'
+          '(info, cMethods, callMethods, NULL, NULL);}', file=project_base)
+
+
+def write_cpp_directives(out: TextIO, declarations: bool = False) -> None:
+    """
+    Write necessary C preprocessor directives to out.
+
+    :param out: C source file stream
+    :param declarations: whether to include ``#define``s for CALL_DECL and C_DECL
+    """
+    print('#include<stdbool.h>', file=out)
+    print('#include<stdint.h>', file=out)
+    print('#include<Rinternals.h>', file=out)
+    print('#include<R_ext/Rdynload.h>', file=out, end='\n\n')
+    if declarations:
+        print('#define CALL_DECL(name, n) {#name, (DL_FUNC) &name, n}', file=out)
+        print('#define C_DECL(name, n) {#name, (DL_FUNC) &name, n, name ## _args}',
+              file=out, end='\n\n')
 
 
 def main():
@@ -755,32 +814,20 @@ def main():
     c_path = Path(args.out_dir, 'src')
     c_path.mkdir(exist_ok=True, parents=True)
     dot_C_funcs = []
-    dot_Call_funs = []
+    dot_Call_funcs = []
+
     try:
         with open(c_path / 'init.c', 'w') as project_base:
-            print('#include<stdbool.h>', file=project_base)
-            print('#include<stdint.h>', file=project_base)
-            print('#include<Rinternals.h>', file=project_base)
-            print('#include<R_ext/Rdynload.h>', file=project_base)
-            print('#define CALL_DECL(name, n) {#name, (DL_FUNC) &name, n}', file=project_base)
-            print('#define C_DECL(name, n) {#name, (DL_FUNC) &name, n, name##args}',
-                  file=project_base, end='\n\n')
+            write_cpp_directives(project_base, True)
             for infile in infiles:
                 C, Call = create_wrappers_for_header_file(
                     infile, args.out_dir, include_dir, project_base,
                     gen_wrapper, exp_wrapper
                 )
-                dot_Call_funs += Call
+                dot_Call_funcs += Call
                 dot_C_funcs += C
-            # TODO: create SEXPTYPE arrays for .C functions
-            # TODO: create array of R_CMethodDef with .C functions
-            print('\nR_CallMethodDef callMethods[] = {', file=project_base)
-            for name, n in dot_Call_funs:
-                print(f'\tCALL_DECL({name}, {n}),', file=project_base)
-            print('\t{NULL, NULL, 0}', file=project_base)
-            print('};', file=project_base, end='\n\n')
-            print('void R_init_lib(DllInfo *info){R_registerRoutines'
-                  '(info, cMethods, callMethods, NULL, NULL);}', file=project_base)
+
+            register_symbols(project_base, dot_Call_funcs, dot_C_funcs)
 
     except IOError as e:
         logging.critical(f'Can\'t open {c_path / "init.c"}: {e}')
