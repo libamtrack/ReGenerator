@@ -135,9 +135,9 @@ class Parameter:
         self.ord = ordinal
         self.ctype = eval(desc['ctypes_type'])
         self.raw_type: str = desc['raw_type'] + '*'*(desc['array'] + desc['pointer'])
-        self.name = desc['name']
-        self.mode = mode[1:-1].lower() if mode != '' else 'in'
-        self.size = size
+        self.name: str = desc['name']
+        self.mode: str = mode[1:-1].lower() if mode != '' else 'in'
+        self.size: Union[str, int, None] = size
         self.targets = []  # only used with size parameters
         self.description = description.strip()
         if size:
@@ -398,6 +398,39 @@ def generate_dot_C_wrapper(func_name: str,
     )
 
 
+def generate_C_wrapper_dot_C(func_name: str,
+                             params_list: list[Parameter]):
+    signature = [f'void {func_name}_wrapper(']
+    middle = ['){']
+    before_call_former = []
+    before_call_latter = []
+    call_proper = ['\t{}({});'.format(
+        func_name,
+        ', '.join(p.name for p in params_list)
+    )]
+    after_call = []
+    cleanup = []
+    end = ['}']
+    for param in params_list:
+        signature.append(f'\t{dot_C_conversions[param.Rtype]} p_{param.name},')
+        if param.is_array():
+            pass
+        else:
+            pass
+
+    signature[-1] = signature[-1][:-1]  # we need to trim the ',' after the last argument
+    return '\n'.join(
+        signature
+        + middle
+        + before_call_former
+        + before_call_latter
+        + call_proper
+        + after_call
+        + cleanup
+        + end
+    )
+
+
 def generate_dot_Call_wrapper(func_name: str,
                               params_list: list[Parameter],
                               export=False) -> str:
@@ -527,7 +560,27 @@ def generate_C_wrapper_dot_Call(func_name: str,
     end = ['\tUNPROTECT(1);', '\treturn RETVAL;', '}']
     for param in params_list:
         signature.append(f'\tSEXP p_{param.name},')
-        if param.size is None:
+        if param.is_array():
+            middle.append(
+                '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
+                .format(param.raw_type, param.name,
+                        param.raw_type.replace('*', '', 1),
+                        param.size)
+            )
+            if param.raw_type == 'char**':
+                middle.append(
+                    '\tfor(int i = 0; i < {2}; i++) {0}[i] = R_STRING((STRING_ELT(p_{0}))[i]);'
+                    .format(param.name, param.SEXP_conversion,
+                            param.size)
+                )
+            else:
+                middle.append(
+                    '\tfor(int i = 0; i < {2}; i++) {0}[i] = ({1}(p_{0}))[i];'
+                    .format(param.name, param.SEXP_conversion,
+                            param.size)
+                )
+            call.append(f'\tfree({param.name});')
+        else:
             if (not param.raw_type.endswith('*')) or param.raw_type == 'char*':
                 middle.append(
                     '\t{0} {1} = *({2}(p_{1}));'
@@ -550,26 +603,6 @@ def generate_C_wrapper_dot_Call(func_name: str,
                     .format(param.name, param.SEXP_conversion)
                 )
                 call.append(f'\tfree({param.name});')
-        else:
-            middle.append(
-                '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
-                .format(param.raw_type, param.name,
-                        param.raw_type.replace('*', '', 1),
-                        param.size)
-            )
-            if param.raw_type == 'char**':
-                middle.append(
-                    '\tfor(int i = 0; i < {2}; i++) {0}[i] = R_STRING((STRING_ELT(p_{0}))[i]);'
-                    .format(param.name, param.SEXP_conversion,
-                            param.size)
-                )
-            else:
-                middle.append(
-                    '\tfor(int i = 0; i < {2}; i++) {0}[i] = ({1}(p_{0}))[i];'
-                    .format(param.name, param.SEXP_conversion,
-                            param.size)
-                )
-            call.append(f'\tfree({param.name});')
     signature[-1] = signature[-1][:-1]  # we need to trim the ',' after the last argument
     return '\n'.join(
         signature
