@@ -80,16 +80,16 @@ False
 >>> m is None
 True
 """
+import logging
 import re
 import argparse
 import ctypes  # used by eval
-import warnings
 from os import PathLike
 from os.path import commonpath
 from sys import stderr
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePosixPath, PurePath
 from collections.abc import Collection
-from typing import Union, Literal
+from typing import Union, Literal, TextIO
 
 from CppHeaderParser import CppHeader, CppMethod, CppVariable
 
@@ -117,14 +117,8 @@ array_regex = re.compile(r'array\s*of\s*(length|size)\s*(?P<lname>[a-z0-9_]+)')
 type_qualifiers = re.compile(r'volatile|const|restrict|register')
 
 
-def extract_functions_from_file(path) -> list[CppMethod]:
-    try:
-        return CppHeader(path).functions
-    except IOError:
-        raise
-    except (TypeError, ValueError, AttributeError) as e:
-        message = f'{path} is not a valid C/C++ header file'
-        raise ValueError(message) from e
+#  Any amount of whitespace, if followed by a '('
+function_name_end = re.compile(r'\s*(?=\()')
 
 
 class Parameter:
@@ -186,6 +180,20 @@ class Parameter:
     @property
     def SEXP_conversion(self):
         return SEXP_conversion[self.ctype]
+
+    @property
+    def SEXPTYPE(self):
+        return type_registration[self.ctype]
+
+
+def extract_functions_from_file(path) -> list[CppMethod]:
+    try:
+        return CppHeader(path).functions
+    except IOError:
+        raise
+    except (TypeError, ValueError, AttributeError) as e:
+        message = f'{path} is not a valid C/C++ header file'
+        raise ValueError(message) from e
 
 
 def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, list[Parameter]]:
@@ -254,7 +262,10 @@ def generate_external_call(func_name: str,
                            library_name: str = None) -> str:
     """
     Creates a call to .C or .Call with appropriate name and parameters.
-    If library_name is omitted, creates a wrapper that looks everywhere for the function name.
+
+    If library_name is omitted, creates a wrapper that looks everywhere
+    for the function name.
+
     If method is .Call, it will call the C wrapper to func_name.
 
     :param func_name: name of the function
@@ -263,18 +274,22 @@ def generate_external_call(func_name: str,
     :param library_name: where the call should look for the function
     :return: full call to .C/.Call
     """
-    if method == '.Call':
-        func_name += '_wrapper'
-    ret = [method, '("', func_name, '"']
+    ret = [method, '("', func_name, '_wrapper"']
     if len(params_list) > 0:
-        ret.append(', ' + ', '.join(param.name for param in params_list))
+        ret.append(', ' + ', '.join(
+            # in .C we want to name the parameters
+            # so that we can later access them by name
+            (param.name if method == '.Call' else '{0} = {0}'.format(param.name))
+            for param in params_list))
     if library_name is not None:
         ret.append(f'PACKAGE = "{library_name}"')
     ret.append(')')
     return ''.join(ret)
 
 
-def generate_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
+def generate_dot_C_wrapper(func_name: str,
+                           params_list: list[Parameter],
+                           export=False) -> str:
     """
     Uses a function name and parameters list returned by :func:`parse_function_info`
     to create an R wrapper with its .C function
@@ -289,7 +304,10 @@ def generate_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
          * @\0param[in,out] pressures array of length n, pressures before and after
          * @\0param[out]    dp        pressure changes (array of size n)
          */
-        int pressure_step(const int n, const float dt, const float *widths, float *pressures, float *dp);
+        int pressure_step(
+            const int n, const float dt,
+            const float *widths,
+            float *pressures, float *dp);
 
     Will produce a wrapper like this::
 
@@ -312,12 +330,13 @@ def generate_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
             return(AUTO_RETVAL)
         }
 
-    :param func_name: The name of the C function
-    :type func_name: str
+    :param str func_name: The name of the C function
     :param params_list: List of Parameter objects retrieved from parse_function_info
+    :param bool export: Whether the wrapper should be included in package namespace
     :return: The R wrapper for the provided C function
     :rtype: str
     """
+    docstring = ['#` @export'] if export else []
     wrapper_name = func_name.replace('_', '.')
     signature = [f'{wrapper_name} <- function(']
     center = ['){']
@@ -368,7 +387,8 @@ def generate_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
         )
 
     return '\n'.join(
-        signature
+        docstring
+        + signature
         + [',\n'.join(wrapper_params)]
         + center
         + before_call
@@ -378,7 +398,9 @@ def generate_dot_C_wrapper(func_name: str, params_list: list[Parameter]) -> str:
     )
 
 
-def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> str:
+def generate_dot_Call_wrapper(func_name: str,
+                              params_list: list[Parameter],
+                              export=False) -> str:
     """
     Uses a function name and parameters list returned by :func:`parse_function_info`
     to create an R wrapper with its .Call function
@@ -404,12 +426,13 @@ def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> s
             return(.Call("harmonic_mean_wrapper", n, xs))
         }
 
-    :param func_name: The name of the C function
-    :type func_name: str
+    :param str func_name: The name of the C function
     :param params_list: List of Parameter objects retrieved from parse_function_info
+    :param bool export: Whether the wrapper should be included in package namespace
     :return: The R wrapper for the provided C function
     :rtype: str
     """
+    docstring = ['#` @export'] if export else []
     wrapper_name = func_name.replace('_', '.')
     signature = [f'{wrapper_name} <- function(']
     wrapper_params = []
@@ -439,8 +462,9 @@ def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> s
                 )
             )
     return '\n'.join(
-        signature
-        + wrapper_params
+        docstring
+        + signature
+        + [',\n'.join(wrapper_params)]
         + center
         + type_conversions
         + size_derivations
@@ -449,7 +473,9 @@ def generate_dot_Call_wrapper(func_name: str, params_list: list[Parameter]) -> s
     )
 
 
-def generate_C_wrapper(func_name: str, params_list: list[Parameter], return_type: str) -> str:
+def generate_C_wrapper_dot_Call(func_name: str,
+                                params_list: list[Parameter],
+                                return_type: str) -> str:
     """
     Uses a function name, its return type and its parameters (a list of
     :class:`Parameter`) to create a C wrapper to a C function using R's SEXP
@@ -467,11 +493,12 @@ def generate_C_wrapper(func_name: str, params_list: list[Parameter], return_type
 
     Will produce a wrapper like this::
 
+        /* includes omitted */
         SEXP harmonic_mean_wrapper(
             SEXP p_n,
             SEXP p_xs,
         ){
-            SEXP RETVAL = PROTECT(AllocVector(REALSXP, 1));
+            SEXP RETVAL = PROTECT(AllocVector(REALSXP % MAX_NUM_SEXPTYPE, 1));
             int n = *(INTEGER(p_n));
             double* xs = (double*)malloc(sizeof(double) * n);
             for(int i = 0; i < n; i++) xs[i] = (REAL(p_xs))[i];
@@ -487,10 +514,10 @@ def generate_C_wrapper(func_name: str, params_list: list[Parameter], return_type
     :return: a C wrapper compatible with the .Call interface
     """
     return_ctype = str_to_ctype(return_type)
-    signature = [f'SEXP {func_name}_wrapper(']
+    signature = [f'SEXP {func_name}_wrapper( ']
     middle = [
         '){',
-        '\tSEXP RETVAL = PROTECT(AllocVector({}, 1));'
+        '\tSEXP RETVAL = PROTECT(AllocVector({} % MAX_NUM_SEXPTYPE, 1));'
         .format(type_registration[return_ctype])
     ]
     late = []
@@ -543,6 +570,7 @@ def generate_C_wrapper(func_name: str, params_list: list[Parameter], return_type
                             param.size)
                 )
             call.append(f'\tfree({param.name});')
+    signature[-1] = signature[-1][:-1]  # we need to trim the ',' after the last argument
     return '\n'.join(
         signature
         + middle
@@ -554,23 +582,31 @@ def generate_C_wrapper(func_name: str, params_list: list[Parameter], return_type
 
 def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                                     out_dir: str,
-                                    include_dir: str,
-                                    namespace: Collection[str] = None):
+                                    include_dir: Union[str, PathLike[str]],
+                                    init_file: TextIO,
+                                    namespace: Collection[str] = None,
+                                    exp_namespace: Collection[str] = None):
     """
-    Reads a given header file and creates R and (eventually) C wrappers
+    Reads a given header file and creates R and C (if necessary) wrappers
     for the functions defined inside.
 
     :param include_dir: root directory for all header files
     :param path: path to the C header file
     :param out_dir: where to create files with wrappers
+    :param init_file: path to ``init.c``, which is where symbol registration
+        for R interaction typically resides
     :param namespace: functions for which we want wrappers to be created
-    :return:
+    :param exp_namespace: functions which we want to export in final package
+    :return: information about symbols that need to be registered
     """
-    Path(out_dir).mkdir(parents=True, exist_ok=True)
-    r_out_path = Path(out_dir, Path(path).name.replace('.h', '.R'))
-    c_out_path = Path(out_dir, Path(path).name.replace('.h', '_wrappers.c'))
+    Path(out_dir, 'R').mkdir(parents=True, exist_ok=True)
+    r_out_path = Path(out_dir, 'R', Path(path).name.replace('.h', '.R'))
+    c_out_path = Path(out_dir, 'src', Path(path).name.replace('.h', '_wrappers.c'))
     r_wrappers = []
     c_wrappers = []
+    dot_c_functions = []
+    dot_call_functions = []
+
     ret = set()
     for func in extract_functions_from_file(path):
         func['rtnType'] = re.sub(type_qualifiers, '', func['rtnType'])
@@ -581,25 +617,48 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
             # in case NAMESPACE file is not provided (here `namespace is None`) we generate wrappers for all functions
             # otherwise wrappers are generated only for functions listed in NAMESPACE file (here `name in namespace`)
             if namespace is None or name in namespace:
-                if sum(map(Parameter.is_out, params)) > 0:  # create a .C wrapper if there are output parameters
-                    r_wrapper = generate_dot_C_wrapper(name, params)
+                # likewise, if no NAMESPACE file is provided, we export all functions
+                export = exp_namespace is None or name in exp_namespace
+                if any(map(Parameter.is_out, params)):  # create a .C wrapper if there are output parameters
+                    logging.warning(
+                        '{}:{}: Creating C wrappers for the '
+                        '.C interface is not yet supported'
+                        .format(Path(path).relative_to(include_dir),
+                                func['line_number'])
+                    )
+                    r_wrapper = generate_dot_C_wrapper(name, params, export)
                     c_wrapper = ''
                     ret.add(name)
+
+                    print('extern void', name + '_wrapper', '(',
+                          ', '.join(dot_C_conversions[p.Rtype] for p in params),
+                          ');', file=init_file)
+                    dot_c_functions.append((name + '_wrapper', params))
                 elif func['rtnType'] != 'void':  # create a .Call/.External wrapper
-                    message = 'Generating .Call wrappers is not yet fully supported'
-                    warnings.warn(message)
-                    r_wrapper = generate_dot_Call_wrapper(name, params)
-                    c_wrapper = generate_C_wrapper(name, params, func['rtnType'])
+                    r_wrapper = generate_dot_Call_wrapper(name, params, export)
+                    c_wrapper = generate_C_wrapper_dot_Call(name, params, func['rtnType'])
                     ret.add(name)
+                    print(
+                        'extern SEXP', name + '_wrapper', '(',
+                        ', '.join(['SEXP'] * len(params)), ');',
+                        file=init_file
+                    )
+                    dot_call_functions.append((name + '_wrapper', len(params)))
                 else:  # void func with no in params - nothing to create a wrapper for
-                    message = 'void function with no out parameter won\'t create a wrapper'
-                    warnings.warn(message)
+                    message = (
+                        '{}:{}: void function `{}` with no out '
+                        'parameter won\'t create a wrapper'
+                        .format(Path(path).relative_to(include_dir),
+                                func['line_number'], func['name'])
+                    )
+                    logging.info(message)
                     r_wrapper = c_wrapper = ''
 
                 r_wrappers.append(r_wrapper)
                 c_wrappers.append(c_wrapper)
         except Exception as e:
-            print(e, file=stderr)
+            message = f'{path}: {type(e)} while creating wrapper for {func["name"]}: {e}'
+            logging.error(message)
 
     if any(r_wrappers):  # only create the file if there's anything to write
         try:
@@ -607,18 +666,21 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
             with open(r_out_path, 'w', encoding='utf-8') as fout:
                 print('\n\n\n'.join(filter(None, r_wrappers)), file=fout)
         except IOError as e:
-            print(e, file=stderr)
+            message = f'Can\'t write R wrappers to {r_out_path}: {e}'
+            logging.critical(message)
 
     if any(c_wrappers):
         try:
             with open(c_out_path, 'w', encoding='utf-8') as fout:
-                print('#include <Rinternals.h>', file=fout)
+                write_cpp_directives(fout)
                 c_include_filename = PurePosixPath(path).relative_to(PurePosixPath(include_dir))
                 print(f'#include "{c_include_filename}"', end='\n\n\n', file=fout)
                 print('\n\n\n'.join(filter(None, c_wrappers)), file=fout)
         except IOError as e:
-            print(e, file=stderr)
-    return ret
+            message = f'Can\'t write C wrappers to {c_out_path}: {e}'
+            logging.critical(message)
+
+    return dot_c_functions, dot_call_functions
 
 
 def read_namespace(path: str) -> Union[tuple[None, None], tuple[set[str], set[str]]]:
@@ -638,8 +700,8 @@ def read_namespace(path: str) -> Union[tuple[None, None], tuple[set[str], set[st
         with open(path, 'r', encoding='utf-8') as fin:
             names = fin.readlines()
     except IOError:
-        print("Couldn't retrieve namespace file \"{}\", assuming all functions"
-              .format(Path(path).absolute()), file=stderr)
+        message = 'Couldn\'t retrieve namespace file "{}", assuming all functions'
+        logging.warning(message.format(Path(path).absolute()))
         return None, None
     names = map(lambda x: re.sub(r'#.*$', '', x).strip(), names)  # remove comments
     names = filter(None, names)  # remove empty lines
@@ -650,8 +712,61 @@ def read_namespace(path: str) -> Union[tuple[None, None], tuple[set[str], set[st
             wrapper.add(name[4:])
         else:
             wrapper.add(name)
-            export.add(name.replace('_', '.'))
+            export.add(name)
     return export, wrapper
+
+
+def register_symbols(project_base: TextIO,
+                     dot_Call_funs: list[tuple[str, int]],
+                     dot_C_funcs: list[tuple[str, list[Parameter]]]) -> None:
+    """
+    Writes C code responsible for registering symbols in R when loading
+    the library file, allowing for fast lookup of relevant functions
+
+    :param project_base: init.c file stream
+    :param dot_Call_funs: names and numbers of parameters
+        of functions used in .Call calls
+    :param dot_C_funcs: names and parameters of functions used in .C calls
+    """
+
+    # wrappers used in .C calls
+    dot_C_registrations = []
+    for name, args in dot_C_funcs:
+        print('R_NativePrimitiveArgType  ', name, '_args[] = {',
+              ', '.join(arg.SEXPTYPE for arg in args),
+              '};', sep='', file=project_base)
+        dot_C_registrations.append(f'\tC_DECL({name}, {len(args)}),')
+
+    print('\nR_CMethodDef cMethods[] = {', file=project_base)
+    print('\n'.join(dot_C_registrations), file=project_base)
+    print('\t{NULL, NULL, 0, NULL}', '};',
+          sep='\n', end='\n\n', file=project_base)
+
+    # wrappers used in .Call calls
+    print('R_CallMethodDef callMethods[] = {', file=project_base)
+    for name, n in dot_Call_funs:
+        print(f'\tCALL_DECL({name}, {n}),', file=project_base)
+    print('\t{NULL, NULL, 0}', file=project_base)
+    print('};', file=project_base, end='\n\n')
+    print('void R_init_lib(DllInfo *info){R_registerRoutines'
+          '(info, cMethods, callMethods, NULL, NULL);}', file=project_base)
+
+
+def write_cpp_directives(out: TextIO, declarations: bool = False) -> None:
+    """
+    Write necessary C preprocessor directives to out.
+
+    :param out: C source file stream
+    :param declarations: whether to include ``#define``s for CALL_DECL and C_DECL
+    """
+    print('#include<stdbool.h>', file=out)
+    print('#include<stdint.h>', file=out)
+    print('#include<Rinternals.h>', file=out)
+    print('#include<R_ext/Rdynload.h>', file=out, end='\n\n')
+    if declarations:
+        print('#define CALL_DECL(name, n) {#name, (DL_FUNC) &name, n}', file=out)
+        print('#define C_DECL(name, n) {#name, (DL_FUNC) &name, n, name ## _args}',
+              file=out, end='\n\n')
 
 
 def main():
@@ -660,14 +775,35 @@ def main():
     )
     parser.add_argument('infile', nargs='+',
                         help='C header files to be parsed')
-    parser.add_argument('-o', dest='out_dir', metavar='output_dir',
+    parser.add_argument('-o', '--out-dir', dest='out_dir', metavar='output_dir',
                         help='directory to write wrappers to, (default ./out)',
                         default='./out')
-    parser.add_argument('-n', dest='namespace', metavar='namespace',
+    parser.add_argument('-n', '--namespace', dest='namespace', metavar='namespace',
                         help='path to project namespace file (default ./NAMESPACE)',
                         default='./NAMESPACE')
+    parser.add_argument('-l', '--log-file', dest='log_file', metavar='logfile',
+                        help='Redirect logging information to logfile instead of stderr',
+                        default=None)
+    parser.add_argument('-v', '--verbose', dest='verbose', action='count',
+                        help='Log more information, can be stacked up to 2 times. '
+                        'Concels out with -q', default=0)
+    parser.add_argument('-q', '--quiet', dest='quiet', action='count',
+                        help='Log less information, can be stacked up to 2 times. '
+                        'Cancels out with -v', default=0)
     args = parser.parse_args()
-    _, gen_wrapper = read_namespace(args.namespace)
+
+    verbosity = min(5, max(0, 2+args.verbose-args.quiet))
+    verbosity_levels = [logging.CRITICAL, logging.ERROR,
+                        logging.WARNING, logging.INFO, logging.NOTSET]
+    logger_settings = {'level': verbosity_levels[verbosity]}
+    if args.log_file:
+        logger_settings['file'] = args.log_file
+    else:
+        logger_settings['stream'] = stderr
+
+    logging.basicConfig(**logger_settings)
+
+    exp_wrapper, gen_wrapper = read_namespace(args.namespace)
 
     infiles = [Path(p).absolute() for p in args.infile]
     if len(infiles) > 1:
@@ -675,8 +811,26 @@ def main():
     else:
         include_dir = infiles[0].parent
 
-    for infile in infiles:
-        create_wrappers_for_header_file(infile, args.out_dir, include_dir, gen_wrapper)
+    c_path = Path(args.out_dir, 'src')
+    c_path.mkdir(exist_ok=True, parents=True)
+    dot_C_funcs = []
+    dot_Call_funcs = []
+
+    try:
+        with open(c_path / 'init.c', 'w') as project_base:
+            write_cpp_directives(project_base, True)
+            for infile in infiles:
+                C, Call = create_wrappers_for_header_file(
+                    infile, args.out_dir, include_dir, project_base,
+                    gen_wrapper, exp_wrapper
+                )
+                dot_Call_funcs += Call
+                dot_C_funcs += C
+
+            register_symbols(project_base, dot_Call_funcs, dot_C_funcs)
+
+    except IOError as e:
+        logging.critical(f'Can\'t open {c_path / "init.c"}: {e}')
 
 
 if __name__ == '__main__':

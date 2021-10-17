@@ -2,7 +2,7 @@ from ctypes import *
 from collections import defaultdict
 
 
-__all__ = ['mapping', 'type_registration', 'SEXP_conversion', 'str_to_ctype']
+__all__ = ['mapping', 'type_registration', 'SEXP_conversion', 'str_to_ctype', 'dot_C_conversions']
 
 
 # mapping from C type to vector types ('modes') as they are seen in R
@@ -34,6 +34,8 @@ mapping = defaultdict(lambda: 'error.type', {
 # - LGLSXP: logical vectors
 # - INTSXP: integer vectors
 # - REALSXP: numeric vectors
+# - SINGLESXP: single precision numeric vectors
+#   (defined in R_ext/Rdynload.h: https://lukasstadler.github.io/RAPI/html/_rdynload_8h.html)
 # - RAWSXP: raw vector (i.e. a vector of unsigned bytes)
 type_registration = defaultdict(lambda: 'NILSXP', {
     c_bool: 'LGLSXP',
@@ -47,7 +49,7 @@ type_registration = defaultdict(lambda: 'NILSXP', {
     c_uint16: 'INTSXP',
     c_uint32: 'INTSXP',
     c_uint64: 'INTSXP',
-    c_float: 'REALSXP',
+    c_float: 'SINGLESXP',
     c_double: 'REALSXP',
     c_void_p: 'RAWSXP'
 })
@@ -56,10 +58,12 @@ type_registration = defaultdict(lambda: 'NILSXP', {
 # Conversion functions which extract C arrays from SEXP objects
 # in short:
 # - LOGICAL: logical -> int *
-# - R_CHAR: character -> char *
+# - R_CHAR: character -> char * (first symbol of first element)
+# - R_STRING: character -> SEXP * (array of strings)
 # - RAW: raw -> unsigned char *
 # - INTEGER: integer -> int *
 # - REAL: numeric -> double *
+# for more information check https://lukasstadler.github.io/RAPI/html/_rinternals_8h.html
 SEXP_conversion = {
     c_bool: 'LOGICAL',
     c_char: 'R_CHAR',
@@ -69,12 +73,24 @@ SEXP_conversion = {
     c_int16: 'INTEGER',
     c_int32: 'INTEGER',
     c_int64: 'INTEGER',
-    c_uint16: 'INTEGER',
-    c_uint32: 'INTEGER',
-    c_uint64: 'INTEGER',
+    c_uint16: 'INTEGER',  # note that integers in R are ALWAYS signed, so passing
+    c_uint32: 'INTEGER',  # negative numbers to a function that takes unsigned
+    c_uint64: 'INTEGER',  # integers as parameters will result in undefined behavior
+    # see: https://www.rdocumentation.org/packages/base/topics/integer, section 'Details'
     c_float: 'REAL',
     c_double: 'REAL',
     c_void_p: 'RAW'
+}
+
+
+# a dictionary of how (as what c type) each vector type is passed to .C
+dot_C_conversions = {
+    'integer': 'int *',
+    'double': 'double *',
+    'single': 'float *',
+    'logical': 'int *',
+    'character': 'char **',
+    'raw': 'unsigned char *',
 }
 
 
@@ -90,6 +106,7 @@ declarations_conversion = {
     'unsigned int': c_uint,
     'unsigned long': c_ulong,
     'unsigned long long': c_ulonglong,
+    'bool': c_bool,
 
     'float': c_float,
     'double': c_double,
