@@ -400,6 +400,55 @@ def generate_dot_C_wrapper(func_name: str,
 
 def generate_C_wrapper_dot_C(func_name: str,
                              params_list: list[Parameter]):
+    """
+    Uses a function name, its return type and its parameters (a list of
+    :class:`Parameter`) to create a C wrapper to a C function using the limited
+    set of pointer types thar R's ``.C`` function uses.
+
+    Example: the function defined as follows::
+
+        /**
+         * calculates time step for balancing pressure in pipes
+         * @\0param         n         number of segments
+         * @\0param         dt        time step size
+         * @\0param[in]     widths    widths of pipe segments (array of length n)
+         * @\0param[in,out] pressures array of length n, pressures before and after
+         * @\0param[out]    dp        pressure changes (array of size n)
+         */
+        int pressure_step(
+            const int n, const float dt,
+            const float *widths,
+            float *pressures, float *dp);
+
+    Will produce a wrapper like this::
+
+        void pressure_step_wrapper(
+            int * p_n,
+            float * p_dt,
+            float * p_widths,
+            float * p_pressures,
+            float * p_dp
+        ){
+            int n = *p_n;
+            float dt = *p_dt;
+            float* widths = (float*)malloc(sizeof(float) * n);
+            for(int i = 0; i < n; i++) widths[i] = p_widths[i];
+            float* pressures = (float*)malloc(sizeof(float) * n);
+            for(int i = 0; i < n; i++) pressures[i] = p_pressures[i];
+            float* dp = (float*)malloc(sizeof(float) * n);
+            for(int i = 0; i < n; i++) dp[i] = p_dp[i];
+            pressure_step(n, dt, widths, pressures, dp);
+            for(int i = 0; i < n; i++) p_pressures[i] = pressures[i];
+            for(int i = 0; i < n; i++) p_dp[i] = dp[i];
+            free(widths);
+            free(pressures);
+            free(dp);
+        }
+
+    :param func_name: name of the function
+    :param params_list: list of :class:`Parameter`, parameters of ``func_name``
+    :return:
+    """
     signature = [f'void {func_name}_wrapper(']
     middle = ['){']
     before_call_former = []
