@@ -35,6 +35,7 @@ mapping = defaultdict(lambda: 'error.type', {
 # - INTSXP: integer vectors
 # - REALSXP: numeric vectors
 # - SINGLESXP: single precision numeric vectors
+#   (defined in R_ext/Rdynload.h: https://lukasstadler.github.io/RAPI/html/_rdynload_8h.html)
 # - RAWSXP: raw vector (i.e. a vector of unsigned bytes)
 type_registration = defaultdict(lambda: 'NILSXP', {
     c_bool: 'LGLSXP',
@@ -57,10 +58,12 @@ type_registration = defaultdict(lambda: 'NILSXP', {
 # Conversion functions which extract C arrays from SEXP objects
 # in short:
 # - LOGICAL: logical -> int *
-# - R_CHAR: character -> char *
+# - R_CHAR: character -> char * (first symbol of first element)
+# - R_STRING: character -> SEXP * (array of strings)
 # - RAW: raw -> unsigned char *
 # - INTEGER: integer -> int *
 # - REAL: numeric -> double *
+# for more information check https://lukasstadler.github.io/RAPI/html/_rinternals_8h.html
 SEXP_conversion = {
     c_bool: 'LOGICAL',
     c_char: 'R_CHAR',
@@ -73,6 +76,7 @@ SEXP_conversion = {
     c_uint16: 'INTEGER',  # note that integers in R are ALWAYS signed, so passing
     c_uint32: 'INTEGER',  # negative numbers to a function that takes unsigned
     c_uint64: 'INTEGER',  # integers as parameters will result in undefined behavior
+    # see: https://www.rdocumentation.org/packages/base/topics/integer, section 'Details'
     c_float: 'REAL',
     c_double: 'REAL',
     c_void_p: 'RAW'
