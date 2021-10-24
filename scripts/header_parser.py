@@ -413,10 +413,59 @@ def generate_C_wrapper_dot_C(func_name: str,
     end = ['}']
     for param in params_list:
         signature.append(f'\t{dot_C_conversions[param.Rtype]} p_{param.name},')
-        if param.is_array():
-            pass
-        else:
-            pass
+
+        if param.is_array():  # array
+            before_call_latter.append(
+                '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
+                .format(param.raw_type, param.name,
+                        param.raw_type.replace('*', '', 1),
+                        param.size)
+            )
+            before_call_latter.append(
+                '\tfor(int i = 0; i < {1}; i++) {0}[i] = p_{0}[i];'
+                .format(param.name, param.size)
+            )
+            if param.is_out():
+                after_call.append(
+                    '\tfor(int i = 0; i < {1}; i++) p_{0}[i] = {0}[i];'
+                    .format(param.name, param.size)
+                )
+            cleanup.append(
+                f'\tfree({param.name});'
+            )
+
+        elif '*' in param.raw_type and param.raw_type != 'char*':  # scalar, as a pointer
+            before_call_former.append(
+                '\t{0} {1} = ({0})malloc(sizeof({2}));'
+                .format(param.raw_type, param.name,
+                        param.raw_type.replace('*', '', 1))
+            )
+            before_call_former.append(
+                '\t*{0} = *p_{0};'.format(param.name)
+            )
+            if param.is_out():
+                after_call.append(
+                    '\t*p_{0} = *{0};'.format(param.name)
+                )
+            cleanup.append(
+                f'\tfree({param.name});'
+            )
+
+        elif param.raw_type == 'char':  # special case because we receive a pointer to pointer to char
+            before_call_former.append(
+                '\tchar {0} = **p_{0};'
+                .format(param.name)
+            )
+
+        else:  # scalar, as a value
+            before_call_former.append(
+                '\t{0} {1} = *p_{1};'
+                .format(param.raw_type, param.name)
+            )
+            if param.is_out():  # for when we have a writeable char* parameter
+                after_call.append(
+                    '\t*p_{0} = {0};'.format(param.name)
+                )
 
     signature[-1] = signature[-1][:-1]  # we need to trim the ',' after the last argument
     return '\n'.join(
@@ -660,7 +709,7 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                                 func['line_number'])
                     )
                     r_wrapper = generate_dot_C_wrapper(name, params, export)
-                    c_wrapper = ''
+                    c_wrapper = generate_C_wrapper_dot_C(name, params)
                     ret.add(name)
 
                     print('extern void', name + '_wrapper', '(',
