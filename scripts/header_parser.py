@@ -348,8 +348,10 @@ def generate_dot_C_wrapper(func_name: str,
     before_call = []
     after_call = []
 
-    size_parameters = list(filter(Parameter.is_size, params_list))
     out_params = list(filter(Parameter.is_out, params_list))
+    size_parameters = list(filter(Parameter.is_size, params_list))
+
+    logging.debug(f'Creating R function {wrapper_name} (.C)')
 
     for param in size_parameters:
         before_call.append(
@@ -460,6 +462,9 @@ def generate_C_wrapper_dot_C(func_name: str,
     after_call = []
     cleanup = []
     end = ['}']
+
+    logging.debug(f'Creating C function {func_name}_wrapper (.C)')
+
     for param in params_list:
         signature.append(f'\t{dot_C_conversions[param.Rtype]} p_{param.name},')
 
@@ -577,6 +582,9 @@ def generate_dot_Call_wrapper(func_name: str,
     type_conversions = []
     sized_parameters = set(filter(Parameter.is_array, params_list))
     lengths = set(filter(Parameter.is_size, params_list))
+
+    logging.debug(f'Creating R function {wrapper_name} (.Call)')
+
     for param in params_list:
         if param not in lengths:
             wrapper_params.append('\t' + param.name)
@@ -656,6 +664,9 @@ def generate_C_wrapper_dot_Call(func_name: str,
             .format(SEXP_conversion[return_ctype],
                     func_name, ', '.join(f'{p.name}' for p in params_list))]
     end = ['\tUNPROTECT(1);', '\treturn RETVAL;', '}']
+
+    logging.debug(f'Creating C function {func_name}_wrapper (.Call)')
+
     for param in params_list:
         signature.append(f'\tSEXP p_{param.name},')
         if param.is_array():
@@ -751,12 +762,6 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                 # likewise, if no NAMESPACE file is provided, we export all functions
                 export = exp_namespace is None or name in exp_namespace
                 if any(map(Parameter.is_out, params)):  # create a .C wrapper if there are output parameters
-                    logging.warning(
-                        '{}:{}: Creating C wrappers for the '
-                        '.C interface is not yet supported'
-                        .format(Path(path).relative_to(include_dir),
-                                func['line_number'])
-                    )
                     r_wrapper = generate_dot_C_wrapper(name, params, export)
                     c_wrapper = generate_C_wrapper_dot_C(name, params)
                     ret.add(name)
