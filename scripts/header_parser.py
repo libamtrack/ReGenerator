@@ -84,6 +84,7 @@ import logging
 import re
 import argparse
 import ctypes  # used by eval
+from glob import glob
 from os import PathLike
 from os.path import commonpath
 from sys import stderr
@@ -907,10 +908,20 @@ def write_cpp_directives(out: TextIO, declarations: bool = False) -> None:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Create R wrapper for functions declared in a header file(s)'
+        description='Create wrappers necessary to create an R package'
+                    ' for functions declared in a header file(s)',
+        epilog='''Glob patterns supported by this script are: 
+    ? - matches any single character
+    * - matches any string
+    ** - matches any path recursively
+
+For example, `?oo.txt` can match foo.txt and boo.txt, `*oo.txt` will \
+additionally match kazoo.txt, and **oo.txt will match all of the above, as \
+well as a/oo.txt and a/b/zoo.txt''',
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument('infile', nargs='+',
-                        help='C header files to be parsed')
+                        help='C header files (or glob patterns) to be parsed')
     parser.add_argument('-o', '--out-dir', dest='out_dir', metavar='output_dir',
                         help='directory to write wrappers to, (default ./out)',
                         default='./out')
@@ -941,7 +952,8 @@ def main():
 
     exp_wrapper, gen_wrapper = read_namespace(args.namespace)
 
-    infiles = [Path(p).absolute() for p in args.infile]
+    infiles = sum((glob(p, recursive=True) for p in args.infile), start=[])
+    infiles = [Path(p).absolute() for p in infiles]
     if len(infiles) > 1:
         include_dir = Path(commonpath(infiles))
     else:
