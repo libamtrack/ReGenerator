@@ -84,6 +84,7 @@ import logging
 import re
 import argparse
 import ctypes  # used by eval
+from glob import glob
 from os import PathLike
 from os.path import commonpath
 from sys import stderr
@@ -135,9 +136,9 @@ class Parameter:
         self.ord = ordinal
         self.ctype = eval(desc['ctypes_type'])
         self.raw_type: str = desc['raw_type'] + '*'*(desc['array'] + desc['pointer'])
-        self.name = desc['name']
-        self.mode = mode[1:-1].lower() if mode != '' else 'in'
-        self.size = size
+        self.name: str = desc['name']
+        self.mode: str = mode[1:-1].lower() if mode != '' else 'in'
+        self.size: Union[str, int, None] = size
         self.targets = []  # only used with size parameters
         self.description = description.strip()
         if size:
@@ -348,8 +349,10 @@ def generate_dot_C_wrapper(func_name: str,
     before_call = []
     after_call = []
 
-    size_parameters = list(filter(Parameter.is_size, params_list))
     out_params = list(filter(Parameter.is_out, params_list))
+    size_parameters = list(filter(Parameter.is_size, params_list))
+
+    logging.debug(f'Creating R function {wrapper_name} (.C)')
 
     for param in size_parameters:
         before_call.append(
@@ -395,6 +398,140 @@ def generate_dot_C_wrapper(func_name: str,
         + call_proper
         + after_call
         + ending
+    )
+
+
+def generate_C_wrapper_dot_C(func_name: str,
+                             params_list: list[Parameter]):
+    """
+    Uses a function name, its return type and its parameters (a list of
+    :class:`Parameter`) to create a C wrapper to a C function using the limited
+    set of pointer types thar R's ``.C`` function uses.
+
+    Example: the function defined as follows::
+
+        /**
+         * calculates time step for balancing pressure in pipes
+         * @\0param         n         number of segments
+         * @\0param         dt        time step size
+         * @\0param[in]     widths    widths of pipe segments (array of length n)
+         * @\0param[in,out] pressures array of length n, pressures before and after
+         * @\0param[out]    dp        pressure changes (array of size n)
+         */
+        int pressure_step(
+            const int n, const float dt,
+            const float *widths,
+            float *pressures, float *dp);
+
+    Will produce a wrapper like this::
+
+        void pressure_step_wrapper(
+            int * p_n,
+            float * p_dt,
+            float * p_widths,
+            float * p_pressures,
+            float * p_dp
+        ){
+            int n = *p_n;
+            float dt = *p_dt;
+            float* widths = (float*)malloc(sizeof(float) * n);
+            for(int i = 0; i < n; i++) widths[i] = p_widths[i];
+            float* pressures = (float*)malloc(sizeof(float) * n);
+            for(int i = 0; i < n; i++) pressures[i] = p_pressures[i];
+            float* dp = (float*)malloc(sizeof(float) * n);
+            for(int i = 0; i < n; i++) dp[i] = p_dp[i];
+            pressure_step(n, dt, widths, pressures, dp);
+            for(int i = 0; i < n; i++) p_pressures[i] = pressures[i];
+            for(int i = 0; i < n; i++) p_dp[i] = dp[i];
+            free(widths);
+            free(pressures);
+            free(dp);
+        }
+
+    :param func_name: name of the function
+    :param params_list: list of :class:`Parameter`, parameters of ``func_name``
+    :return:
+    """
+    signature = [f'void {func_name}_wrapper(']
+    middle = ['){']
+    before_call_former = []
+    before_call_latter = []
+    call_proper = ['\t{}({});'.format(
+        func_name,
+        ', '.join(p.name for p in params_list)
+    )]
+    after_call = []
+    cleanup = []
+    end = ['}']
+
+    logging.debug(f'Creating C function {func_name}_wrapper (.C)')
+
+    for param in params_list:
+        signature.append(f'\t{dot_C_conversions[param.Rtype]} p_{param.name},')
+
+        if param.is_array():  # array
+            before_call_latter.append(
+                '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
+                .format(param.raw_type, param.name,
+                        param.raw_type.replace('*', '', 1),
+                        param.size)
+            )
+            before_call_latter.append(
+                '\tfor(int i = 0; i < {1}; i++) {0}[i] = p_{0}[i];'
+                .format(param.name, param.size)
+            )
+            if param.is_out():
+                after_call.append(
+                    '\tfor(int i = 0; i < {1}; i++) p_{0}[i] = {0}[i];'
+                    .format(param.name, param.size)
+                )
+            cleanup.append(
+                f'\tfree({param.name});'
+            )
+
+        elif '*' in param.raw_type and param.raw_type != 'char*':  # scalar, as a pointer
+            before_call_former.append(
+                '\t{0} {1} = ({0})malloc(sizeof({2}));'
+                .format(param.raw_type, param.name,
+                        param.raw_type.replace('*', '', 1))
+            )
+            before_call_former.append(
+                '\t*{0} = *p_{0};'.format(param.name)
+            )
+            if param.is_out():
+                after_call.append(
+                    '\t*p_{0} = *{0};'.format(param.name)
+                )
+            cleanup.append(
+                f'\tfree({param.name});'
+            )
+
+        elif param.raw_type == 'char':  # special case because we receive a pointer to pointer to char
+            before_call_former.append(
+                '\tchar {0} = **p_{0};'
+                .format(param.name)
+            )
+
+        else:  # scalar, as a value
+            before_call_former.append(
+                '\t{0} {1} = *p_{1};'
+                .format(param.raw_type, param.name)
+            )
+            if param.is_out():  # for when we have a writeable char* parameter
+                after_call.append(
+                    '\t*p_{0} = {0};'.format(param.name)
+                )
+
+    signature[-1] = signature[-1][:-1]  # we need to trim the ',' after the last argument
+    return '\n'.join(
+        signature
+        + middle
+        + before_call_former
+        + before_call_latter
+        + call_proper
+        + after_call
+        + cleanup
+        + end
     )
 
 
@@ -446,6 +583,9 @@ def generate_dot_Call_wrapper(func_name: str,
     type_conversions = []
     sized_parameters = set(filter(Parameter.is_array, params_list))
     lengths = set(filter(Parameter.is_size, params_list))
+
+    logging.debug(f'Creating R function {wrapper_name} (.Call)')
+
     for param in params_list:
         if param not in lengths:
             wrapper_params.append('\t' + param.name)
@@ -525,9 +665,32 @@ def generate_C_wrapper_dot_Call(func_name: str,
             .format(SEXP_conversion[return_ctype],
                     func_name, ', '.join(f'{p.name}' for p in params_list))]
     end = ['\tUNPROTECT(1);', '\treturn RETVAL;', '}']
+
+    logging.debug(f'Creating C function {func_name}_wrapper (.Call)')
+
     for param in params_list:
         signature.append(f'\tSEXP p_{param.name},')
-        if param.size is None:
+        if param.is_array():
+            middle.append(
+                '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
+                .format(param.raw_type, param.name,
+                        param.raw_type.replace('*', '', 1),
+                        param.size)
+            )
+            if param.raw_type == 'char**':
+                middle.append(
+                    '\tfor(int i = 0; i < {2}; i++) {0}[i] = R_STRING((STRING_ELT(p_{0}))[i]);'
+                    .format(param.name, param.SEXP_conversion,
+                            param.size)
+                )
+            else:
+                middle.append(
+                    '\tfor(int i = 0; i < {2}; i++) {0}[i] = ({1}(p_{0}))[i];'
+                    .format(param.name, param.SEXP_conversion,
+                            param.size)
+                )
+            call.append(f'\tfree({param.name});')
+        else:
             if (not param.raw_type.endswith('*')) or param.raw_type == 'char*':
                 middle.append(
                     '\t{0} {1} = *({2}(p_{1}));'
@@ -550,26 +713,6 @@ def generate_C_wrapper_dot_Call(func_name: str,
                     .format(param.name, param.SEXP_conversion)
                 )
                 call.append(f'\tfree({param.name});')
-        else:
-            middle.append(
-                '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
-                .format(param.raw_type, param.name,
-                        param.raw_type.replace('*', '', 1),
-                        param.size)
-            )
-            if param.raw_type == 'char**':
-                middle.append(
-                    '\tfor(int i = 0; i < {2}; i++) {0}[i] = R_STRING((STRING_ELT(p_{0}))[i]);'
-                    .format(param.name, param.SEXP_conversion,
-                            param.size)
-                )
-            else:
-                middle.append(
-                    '\tfor(int i = 0; i < {2}; i++) {0}[i] = ({1}(p_{0}))[i];'
-                    .format(param.name, param.SEXP_conversion,
-                            param.size)
-                )
-            call.append(f'\tfree({param.name});')
     signature[-1] = signature[-1][:-1]  # we need to trim the ',' after the last argument
     return '\n'.join(
         signature
@@ -620,14 +763,8 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                 # likewise, if no NAMESPACE file is provided, we export all functions
                 export = exp_namespace is None or name in exp_namespace
                 if any(map(Parameter.is_out, params)):  # create a .C wrapper if there are output parameters
-                    logging.warning(
-                        '{}:{}: Creating C wrappers for the '
-                        '.C interface is not yet supported'
-                        .format(Path(path).relative_to(include_dir),
-                                func['line_number'])
-                    )
                     r_wrapper = generate_dot_C_wrapper(name, params, export)
-                    c_wrapper = ''
+                    c_wrapper = generate_C_wrapper_dot_C(name, params)
                     ret.add(name)
 
                     print('extern void', name + '_wrapper', '(',
@@ -771,10 +908,20 @@ def write_cpp_directives(out: TextIO, declarations: bool = False) -> None:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Create R wrapper for functions declared in a header file(s)'
+        description='Create wrappers necessary to create an R package'
+                    ' for functions declared in a header file(s)',
+        epilog='''Glob patterns supported by this script are: 
+    ? - matches any single character
+    * - matches any string
+    ** - matches any path recursively
+
+For example, `?oo.txt` can match foo.txt and boo.txt, `*oo.txt` will \
+additionally match kazoo.txt, and **oo.txt will match all of the above, as \
+well as a/oo.txt and a/b/zoo.txt''',
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument('infile', nargs='+',
-                        help='C header files to be parsed')
+                        help='C header files (or glob patterns) to be parsed')
     parser.add_argument('-o', '--out-dir', dest='out_dir', metavar='output_dir',
                         help='directory to write wrappers to, (default ./out)',
                         default='./out')
@@ -805,7 +952,8 @@ def main():
 
     exp_wrapper, gen_wrapper = read_namespace(args.namespace)
 
-    infiles = [Path(p).absolute() for p in args.infile]
+    infiles = sum((glob(p, recursive=True) for p in args.infile), start=[])
+    infiles = [Path(p).absolute() for p in infiles]
     if len(infiles) > 1:
         include_dir = Path(commonpath(infiles))
     else:
