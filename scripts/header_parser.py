@@ -638,7 +638,7 @@ def generate_C_wrapper_dot_Call(func_name: str,
             SEXP p_n,
             SEXP p_xs,
         ){
-            SEXP RETVAL = PROTECT(AllocVector(REALSXP % MAX_NUM_SEXPTYPE, 1));
+            SEXP RETVAL = PROTECT(allocVector(REALSXP % MAX_NUM_SEXPTYPE, 1));
             int n = *(INTEGER(p_n));
             double* xs = (double*)malloc(sizeof(double) * n);
             for(int i = 0; i < n; i++) xs[i] = (REAL(p_xs))[i];
@@ -657,7 +657,7 @@ def generate_C_wrapper_dot_Call(func_name: str,
     signature = [f'SEXP {func_name}_wrapper( ']
     middle = [
         '){',
-        '\tSEXP RETVAL = PROTECT(AllocVector({} % MAX_NUM_SEXPTYPE, 1));'
+        '\tSEXP RETVAL = PROTECT(allocVector({} % MAX_NUM_SEXPTYPE, 1));'
         .format(type_registration[return_ctype])
     ]
     late = []
@@ -896,6 +896,7 @@ def write_cpp_directives(out: TextIO, declarations: bool = False) -> None:
     :param out: C source file stream
     :param declarations: whether to include ``#define``s for CALL_DECL and C_DECL
     """
+    print('#include<stdlib.h>', file=fout)
     print('#include<stdbool.h>', file=out)
     print('#include<stdint.h>', file=out)
     print('#include<Rinternals.h>', file=out)
