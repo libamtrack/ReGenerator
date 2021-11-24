@@ -187,7 +187,7 @@ class Parameter:
         return type_registration[self.ctype]
 
 
-def extract_functions_from_file(path) -> list[CppMethod]:
+def extract_functions_from_file(path) -> list[CppMethod]: # ):
     try:
         return CppHeader(path).functions
     except IOError:
@@ -197,7 +197,7 @@ def extract_functions_from_file(path) -> list[CppMethod]:
         raise ValueError(message) from e
 
 
-def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, list[Parameter]]:
+def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, list[Parameter]]: # ):
     """
     Extracts the name and parameters from a given :class:`CppMethod` object
 
@@ -260,7 +260,7 @@ def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, lis
 def generate_external_call(func_name: str,
                            params_list: list[Parameter],
                            method: Literal['.C', '.Call'],
-                           library_name: str = None) -> str:
+                           library_name: str = None) -> str: # ):
     """
     Creates a call to .C or .Call with appropriate name and parameters.
 
@@ -290,7 +290,7 @@ def generate_external_call(func_name: str,
 
 def generate_dot_C_wrapper(func_name: str,
                            params_list: list[Parameter],
-                           export=False) -> str:
+                           export=False) -> str: # ):
     """
     Uses a function name and parameters list returned by :func:`parse_function_info`
     to create an R wrapper with its .C function
@@ -386,7 +386,7 @@ def generate_dot_C_wrapper(func_name: str,
     else:
         after_call.append(
             '\tAUTO_RETVAL <- list({})'
-            .format(", ".join([f'"{p.name}" = {p.name}' for p in out_params]))
+            .format(", ".join([f'{p.name} = {p.name}' for p in out_params]))
         )
 
     return '\n'.join(
@@ -402,7 +402,7 @@ def generate_dot_C_wrapper(func_name: str,
 
 
 def generate_C_wrapper_dot_C(func_name: str,
-                             params_list: list[Parameter]):
+                             params_list: list[Parameter]) -> str: # ):
     """
     Uses a function name, its return type and its parameters (a list of
     :class:`Parameter`) to create a C wrapper to a C function using the limited
@@ -470,21 +470,36 @@ def generate_C_wrapper_dot_C(func_name: str,
         signature.append(f'\t{dot_C_conversions[param.Rtype]} p_{param.name},')
 
         if param.is_array():  # array
-            before_call_latter.append(
-                '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
-                .format(param.raw_type, param.name,
-                        param.raw_type.replace('*', '', 1),
-                        param.size)
-            )
-            before_call_latter.append(
-                '\tfor(int i = 0; i < {1}; i++) {0}[i] = p_{0}[i];'
-                .format(param.name, param.size)
-            )
-            if param.is_out():
-                after_call.append(
-                    '\tfor(int i = 0; i < {1}; i++) p_{0}[i] = {0}[i];'
+            if param.raw_type == 'char*':
+                before_call_latter.append(
+                    '\tchar* {0} = (char*)malloc({1});'
                     .format(param.name, param.size)
                 )
+                before_call_latter.append(
+                    '\tfor(int i = 0; i < {1}; i++) {0}[i] = (*p_{0})[i];'
+                    .format(param.name, param.size)
+                )
+                if param.is_out():
+                    after_call.append(
+                        '\tfor(int i = 0; i < {1}; i++) (*p_{0})[i] = {0}[i];'
+                        .format(param.name, param.size)
+                    )
+            else:
+                before_call_latter.append(
+                    '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
+                    .format(param.raw_type, param.name,
+                            param.raw_type.replace('*', '', 1),
+                            param.size)
+                )
+                before_call_latter.append(
+                    '\tfor(int i = 0; i < {1}; i++) {0}[i] = p_{0}[i];'
+                    .format(param.name, param.size)
+                )
+                if param.is_out():
+                    after_call.append(
+                        '\tfor(int i = 0; i < {1}; i++) p_{0}[i] = {0}[i];'
+                        .format(param.name, param.size)
+                    )
             cleanup.append(
                 f'\tfree({param.name});'
             )
@@ -537,7 +552,7 @@ def generate_C_wrapper_dot_C(func_name: str,
 
 def generate_dot_Call_wrapper(func_name: str,
                               params_list: list[Parameter],
-                              export=False) -> str:
+                              export=False) -> str: # ):
     """
     Uses a function name and parameters list returned by :func:`parse_function_info`
     to create an R wrapper with its .Call function
@@ -615,7 +630,7 @@ def generate_dot_Call_wrapper(func_name: str,
 
 def generate_C_wrapper_dot_Call(func_name: str,
                                 params_list: list[Parameter],
-                                return_type: str) -> str:
+                                return_type: str) -> str: # ):
     """
     Uses a function name, its return type and its parameters (a list of
     :class:`Parameter`) to create a C wrapper to a C function using R's SEXP
@@ -671,20 +686,20 @@ def generate_C_wrapper_dot_Call(func_name: str,
     for param in params_list:
         signature.append(f'\tSEXP p_{param.name},')
         if param.is_array():
-            middle.append(
+            late.append(
                 '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
                 .format(param.raw_type, param.name,
                         param.raw_type.replace('*', '', 1),
                         param.size)
             )
             if param.raw_type == 'char**':
-                middle.append(
+                late.append(
                     '\tfor(int i = 0; i < {2}; i++) {0}[i] = R_STRING((STRING_ELT(p_{0}))[i]);'
                     .format(param.name, param.SEXP_conversion,
                             param.size)
                 )
             else:
-                middle.append(
+                late.append(
                     '\tfor(int i = 0; i < {2}; i++) {0}[i] = ({1}(p_{0}))[i];'
                     .format(param.name, param.SEXP_conversion,
                             param.size)
