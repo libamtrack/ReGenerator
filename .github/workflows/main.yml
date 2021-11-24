@@ -47,7 +47,7 @@ jobs:
       - name: Build package
         run: |
           cp C_samples/*.c out/src/
-          mkdir C_samples/include
+          mkdir out/include
           cp C_samples/*.h out/include/
           PKG_CFLAGS='-Iout/include' R CMD SHLIB -o library.so out/src/*.c
           
