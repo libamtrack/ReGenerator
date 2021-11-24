@@ -896,7 +896,7 @@ def write_cpp_directives(out: TextIO, declarations: bool = False) -> None:
     :param out: C source file stream
     :param declarations: whether to include ``#define``s for CALL_DECL and C_DECL
     """
-    print('#include<stdlib.h>', file=fout)
+    print('#include<stdlib.h>', file=out)
     print('#include<stdbool.h>', file=out)
     print('#include<stdint.h>', file=out)
     print('#include<Rinternals.h>', file=out)
