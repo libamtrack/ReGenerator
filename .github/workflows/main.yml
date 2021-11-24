@@ -51,9 +51,9 @@ jobs:
           cp C_samples/*.h out/include/
           PKG_CFLAGS='-Iout/include' R CMD SHLIB -o library.so out/src/*.c
           
-      #- name: Test package
-      #  run: |
-      #    R BATCH 'dyn.load("library.so")'
+      - name: Test package
+        run: |
+          R BATCH 'dyn.load("library.so")'
          
   build-c-ubuntu:
     # The type of runner that the job will run on
