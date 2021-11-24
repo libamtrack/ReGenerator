@@ -77,7 +77,7 @@ bool one_table_in_no_out_params_bool_return_function( double* table_param_in_one
  * This functions sets all table_param_out_one elements to 10
  * 
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  */
 void no_in_one_table_out_params_no_return_function( double* table_param_out_one,
@@ -87,7 +87,7 @@ void no_in_one_table_out_params_no_return_function( double* table_param_out_one,
  * This functions sets all table_param_out_one elements to -10 and returns a sum of them
  *
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return sum of table_param_out_one elements = size_param_out_one * (-10)
  */
@@ -98,7 +98,7 @@ int no_in_one_table_out_params_int_return_function( double* table_param_out_one,
  * This functions sets all table_param_out_one elements to 10 and returns a sum of them
  *
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return sum of table_param_out_one elements = size_param_out_one * 10
  */
@@ -109,7 +109,7 @@ unsigned int no_in_one_table_out_params_unsigned_int_return_function( double* ta
  * This functions sets all table_param_out_one elements to 10.2 and returns a sum of them
  *
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return sum of table_param_out_one elements = size_param_out_one * 10.2
  */
@@ -120,7 +120,7 @@ float no_in_one_table_out_params_float_return_function( double* table_param_out_
  * This functions sets all table_param_out_one elements to 10.2 and returns a sum of them
  *
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return sum of table_param_out_one elements = size_param_out_one * 10.2
  */
@@ -131,7 +131,7 @@ double no_in_one_table_out_params_double_return_function( double* table_param_ou
  * This functions sets all table_param_out_one elements to 10.2 and checks if sum is less than 100
  *
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return boolean value telling if sum of set elements is less than 100
  */
@@ -226,7 +226,7 @@ bool one_table_in_one_out_param_bool_return_function( double* table_param_in_one
  * 
  * @param[in] param_in_one first in param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  */
 void one_param_in_one_table_out_no_return_function( double param_in_one,
@@ -238,7 +238,7 @@ void one_param_in_one_table_out_no_return_function( double param_in_one,
  *
  * @param[in] param_in_one first in param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return negation of sum of table_param_out_one elements rounded to integer
  */
@@ -251,7 +251,7 @@ int one_param_in_one_table_out_params_int_return_function( double param_in_one,
  *
  * @param[in] param_in_one first in param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return absolute value of sum of table_param_out_in rounded to integer
  */
@@ -264,7 +264,7 @@ unsigned int one_param_in_one_table_out_unsigned_int_return_function( double par
  *
  * @param[in] param_in_one first in param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return sum if table_param_out_one elements
  */
@@ -277,7 +277,7 @@ float one_param_in_one_table_out_float_return_function( double param_in_one,
  *
  * @param[in] param_in_one first in param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return sum if table_param_out_one elements
  */
@@ -290,7 +290,7 @@ double one_param_in_one_table_out_double_return_function( double param_in_one,
  *
  * @param[in] param_in_one first in param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return boolean value telling if sum of table_param_out_one elements is less than size_param_out_one
  */
@@ -307,7 +307,7 @@ bool one_param_in_one_table_out_bool_return_function( double param_in_one,
  * @param[in] table_param_in_one first table in param (array of size size_param_in_one)
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  */
 void one_table_in_one_table_out_params_no_return_function( double* table_param_in_one,
@@ -321,7 +321,7 @@ void one_table_in_one_table_out_params_no_return_function( double* table_param_i
  * @param[in] table_param_in_one first table in param (array of size size_param_in_one)
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return sum of written elements to table_param_out_one rounded to integer
  */
@@ -336,7 +336,7 @@ int one_table_in_one_table_out_params_int_return_function( double* table_param_i
  * @param[in] table_param_in_one first table in param (array of size size_param_in_one)
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return absolute value sum of written elements to table_param_out_one rounded to integer
  */
@@ -351,7 +351,7 @@ unsigned int one_table_in_one_table_out_params_unsigned_int_return_function( dou
  * @param[in] table_param_in_one first table in param (array of size size_param_in_one)
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return sum of written elements
  */
@@ -366,7 +366,7 @@ float one_table_in_one_table_out_params_float_return_function( double* table_par
  * @param[in] table_param_in_one first table in param (array of size size_param_in_one)
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return sum of written elements
  */
@@ -381,7 +381,7 @@ double one_table_in_one_table_out_params_double_return_function( double* table_p
  * @param[in] table_param_in_one first table in param (array of size size_param_in_one)
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return boolean value telling if sum written elements is less than 100
  */
@@ -401,7 +401,7 @@ bool one_table_in_one_table_out_params_bool_return_function( double* table_param
  * @param[in] table_param_in_two second table in param (array of size size_param_in_two)
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  */
 void two_tables_in_one_table_out_params_no_return_function( float* table_param_in_one,
@@ -419,7 +419,7 @@ void two_tables_in_one_table_out_params_no_return_function( float* table_param_i
  * @param[in] table_param_in_two second table in param (array of size size_param_in_two)
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return number of written elements
  */
@@ -438,7 +438,7 @@ int two_tables_in_one_table_out_params_int_return_function( float* table_param_i
  * @param[in] table_param_in_two second table in param (array of size size_param_in_two)
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return number of written elements
  */
@@ -457,7 +457,7 @@ unsigned int two_tables_in_one_table_out_params_unsigned_int_return_function( fl
  * @param[in] table_param_in_two second table in param (array of size size_param_in_two)
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return sum of written elements
  */
@@ -476,7 +476,7 @@ float two_tables_in_one_table_out_params_float_return_function( float* table_par
  * @param[in] table_param_in_two second table in param (array of size size_param_in_two)
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return sum of written elements
  */
@@ -495,7 +495,7 @@ double two_tables_in_one_table_out_params_double_return_function( float* table_p
  * @param[in] table_param_in_two second table in param (array of size size_param_in_two)
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  *
  * @return boolean value telling if number of written elements is equal to size_param_out_one
  */
@@ -516,7 +516,7 @@ bool two_tables_in_one_table_out_params_bool_return_function( float* table_param
  * @param[in] table_param_in_one first table in param (array of size size_param_in_one)
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
  * @param[out] size_param_in_two size of second out table param
  */
@@ -533,7 +533,7 @@ void one_table_in_two_tables_out_params_no_return_function( float* table_param_i
  * @param[in] table_param_in_one first table in param (array of size size_param_in_one)
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
  * @param[out] size_param_in_two size of second out table param
  *
@@ -552,7 +552,7 @@ int one_table_in_two_tables_out_params_int_return_function( float* table_param_i
  * @param[in] table_param_in_one first table in param (array of size size_param_in_one)
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
  * @param[out] size_param_in_two size of second out table param
  *
@@ -571,7 +571,7 @@ unsigned int one_table_in_two_tables_out_params_unsigned_int_return_function( fl
  * @param[in] table_param_in_one first table in param (array of size size_param_in_one)
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
  * @param[out] size_param_in_two size of second out table param
  *
@@ -590,7 +590,7 @@ float one_table_in_two_tables_out_params_float_return_function( float* table_par
  * @param[in] table_param_in_one first table in param (array of size size_param_in_one)
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
  * @param[out] size_param_in_two size of second out table param
  *
@@ -609,7 +609,7 @@ double one_table_in_two_tables_out_params_double_return_function( float* table_p
  * @param[in] table_param_in_one first table in param (array of size size_param_in_one)
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
  * @param[out] size_param_in_two size of second out table param
  *
@@ -634,7 +634,7 @@ bool one_table_in_two_tables_out_params_bool_return_function( float* table_param
  * @param[in] table_param_in_two second table in param (array of size size_param_in_two)
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
  * @param[out] size_param_in_two size of second out table param
  *
@@ -656,7 +656,7 @@ void two_tables_in_two_tables_out_params_no_return_function( float* table_param_
  * @param[in] table_param_in_two second table in param (array of size size_param_in_two)
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
  * @param[out] size_param_in_two size of second out table param
  *
@@ -679,7 +679,7 @@ int two_tables_in_two_tables_out_params_int_return_function( float* table_param_
  * @param[in] table_param_in_two second table in param (array of size size_param_in_two)
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
  * @param[out] size_param_in_two size of second out table param
  *
@@ -702,7 +702,7 @@ unsigned int two_tables_in_two_tables_out_params_unsigned_int_return_function( f
  * @param[in] table_param_in_two second table in param (array of size size_param_in_two)
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
  * @param[out] size_param_in_two size of second out table param
  *
@@ -725,7 +725,7 @@ float two_tables_in_two_tables_out_params_float_return_function( float* table_pa
  * @param[in] table_param_in_two second table in param (array of size size_param_in_two)
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
  * @param[out] size_param_in_two size of second out table param
  *
@@ -749,7 +749,7 @@ double two_tables_in_two_tables_out_params_double_return_function( float* table_
  * @param[in] table_param_in_two second table in param (array of size size_param_in_two)
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
- * @param[out] size_param_out_one size of first table out param
+ * @param[in] size_param_out_one size of first table out param
  * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
  * @param[out] size_param_in_two size of second out table param
  *
