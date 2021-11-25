@@ -346,7 +346,8 @@ def generate_dot_C_wrapper(func_name: str,
     call_proper = [f'''\tAUTO_RET_PARAMS <- {generate_external_call(
         func_name, params_list, '.C'
     )}''']
-    before_call = []
+    before_call_latter = []
+    before_call_former = []
     after_call = []
 
     out_params = list(filter(Parameter.is_out, params_list))
@@ -355,7 +356,7 @@ def generate_dot_C_wrapper(func_name: str,
     logging.debug(f'Creating R function {wrapper_name} (.C)')
 
     for param in size_parameters:
-        before_call.append(
+        before_call_latter.append(
             '\t{} <- min({})'
             .format(param.name,
                     ", ".join([f"length({target})"
@@ -366,14 +367,14 @@ def generate_dot_C_wrapper(func_name: str,
     for param in params_list:
         if 'in' in param.mode:
             wrapper_params.append('\t' + param.name)
-            before_call.append(param.conversion)
+            before_call_former.append(param.conversion)
             if param.size is not None:
-                before_call.append(
+                before_call_latter.append(
                     f'\tstopifnot(length({param.name}) >= {param.size})'
                 )
         if param.is_out():
             if param.mode == 'out':
-                before_call.append(
+                before_call_latter.append(
                     f'\t{param.name} <- {param.Rtype}('
                     f'{param.size if param.size else 1})'
                 )
@@ -394,7 +395,8 @@ def generate_dot_C_wrapper(func_name: str,
         + signature
         + [',\n'.join(wrapper_params)]
         + center
-        + before_call
+        + before_call_former
+        + before_call_latter
         + call_proper
         + after_call
         + ending
