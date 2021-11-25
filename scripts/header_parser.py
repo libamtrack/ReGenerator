@@ -187,7 +187,7 @@ class Parameter:
         return type_registration[self.ctype]
 
 
-def extract_functions_from_file(path) -> list[CppMethod]: # ):
+def extract_functions_from_file(path) -> list[CppMethod]:
     try:
         return CppHeader(path).functions
     except IOError:
@@ -197,7 +197,7 @@ def extract_functions_from_file(path) -> list[CppMethod]: # ):
         raise ValueError(message) from e
 
 
-def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, list[Parameter]]: # ):
+def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, list[Parameter]]:
     """
     Extracts the name and parameters from a given :class:`CppMethod` object
 
@@ -245,7 +245,7 @@ def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, lis
         if not isinstance(param.size, str):
             continue  # only looping over parameters that have a variable size
         try:
-            if params_dict[param.size].is_in():
+            if params_dict[param.size].is_in() and param.is_in():
                 params_dict[param.size].mode = 'size'
                 params_dict[param.size].targets.append(param.name)
         except KeyError as e:
@@ -260,7 +260,7 @@ def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, lis
 def generate_external_call(func_name: str,
                            params_list: list[Parameter],
                            method: Literal['.C', '.Call'],
-                           library_name: str = None) -> str: # ):
+                           library_name: str = None) -> str:
     """
     Creates a call to .C or .Call with appropriate name and parameters.
 
@@ -290,7 +290,7 @@ def generate_external_call(func_name: str,
 
 def generate_dot_C_wrapper(func_name: str,
                            params_list: list[Parameter],
-                           export=False) -> str: # ):
+                           export=False) -> str:
     """
     Uses a function name and parameters list returned by :func:`parse_function_info`
     to create an R wrapper with its .C function
@@ -402,7 +402,7 @@ def generate_dot_C_wrapper(func_name: str,
 
 
 def generate_C_wrapper_dot_C(func_name: str,
-                             params_list: list[Parameter]) -> str: # ):
+                             params_list: list[Parameter]) -> str:
     """
     Uses a function name, its return type and its parameters (a list of
     :class:`Parameter`) to create a C wrapper to a C function using the limited
@@ -552,7 +552,7 @@ def generate_C_wrapper_dot_C(func_name: str,
 
 def generate_dot_Call_wrapper(func_name: str,
                               params_list: list[Parameter],
-                              export=False) -> str: # ):
+                              export=False) -> str:
     """
     Uses a function name and parameters list returned by :func:`parse_function_info`
     to create an R wrapper with its .Call function
@@ -630,7 +630,7 @@ def generate_dot_Call_wrapper(func_name: str,
 
 def generate_C_wrapper_dot_Call(func_name: str,
                                 params_list: list[Parameter],
-                                return_type: str) -> str: # ):
+                                return_type: str) -> str:
     """
     Uses a function name, its return type and its parameters (a list of
     :class:`Parameter`) to create a C wrapper to a C function using R's SEXP
