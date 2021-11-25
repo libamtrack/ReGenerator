@@ -53,7 +53,7 @@ jobs:
           
       - name: Test package
         run: |
-          R BATCH -e 'dyn.load("library.so")'
+          Rscript Rscripts/test.R
          
   build-c-ubuntu:
     # The type of runner that the job will run on
