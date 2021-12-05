@@ -59,6 +59,7 @@ jobs:
          
   compile-generated-windows:
     runs-on: windows-latest
+    needs: [build-c-windows]
     
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -88,7 +89,7 @@ jobs:
       - name: Build package
         run: |
           Copy-Item C_samples\*.c out\src\
-          Noew-Item out\include -ItemType directory
+          New-Item out\include -ItemType directory
           Copy-Item C_samples\*.h out\include\
           R.exe CMD SHLIB -o library.so out/src/*.c
         env:
