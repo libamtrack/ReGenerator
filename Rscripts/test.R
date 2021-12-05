@@ -2,8 +2,7 @@ install.packages('testit', repos='https://cloud.r-project.org/')
 require(testit)
 if(Sys.info()['sysname'] == 'Windows'){
 	dyn.load('library.dll')
-}
-else{
+}else{
 	dyn.load('library.so')
 }
 r_files_dir <- 'out/R'
