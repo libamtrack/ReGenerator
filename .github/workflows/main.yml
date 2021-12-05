@@ -49,12 +49,56 @@ jobs:
           cp C_samples/*.c out/src/
           mkdir out/include
           cp C_samples/*.h out/include/
-          PKG_CFLAGS='-Iout/include' R CMD SHLIB -o library.so out/src/*.c
+          R CMD SHLIB -o library.so out/src/*.c
+        env:
+          PKG_CFLAGS: -Iout/include
           
       - name: Test package
         run: |
           sudo Rscript Rscripts/test.R
          
+  compile-generated-windows:
+    runs-on: windows-latest
+    
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2.3.0
+        with:
+          # Version range or exact version of a Python version to use, using SemVer's version range syntax.
+          python-version: 3.9
+
+      - name: Install python requirements
+        run: pip install -r requirements.txt
+
+      - name: Run doctests
+        run: python -m doctest -v scripts/header_parser.py
+
+      - name: Run wrapper generator
+        run: python scripts/header_parser.py C_samples/*.h -vv
+        
+      - name: Setup R
+        run: |
+          choco install -y r
+          choco install -y rtools
+          
+      - name: Build package
+        run: |
+          Copy-Item C_samples\*.c out\src\
+          Noew-Item out\include -ItemType directory
+          Copy-Item C_samples\*.h out\include\
+          R.exe CMD SHLIB -o library.so out/src/*.c
+        env:
+          PKG_CFLAGS: -Iout/include
+          
+      - name: Test package
+        run: |
+          Rscript Rscripts/test.R
+          
+  
   build-c-ubuntu:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
