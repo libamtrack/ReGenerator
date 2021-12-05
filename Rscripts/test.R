@@ -1,6 +1,6 @@
 install.packages('testit', repos='https://cloud.r-project.org/')
 require(testit)
-if(Sys.info()['sysname'] == 'Windows'{
+if(Sys.info()['sysname'] == 'Windows'){
 	dyn.load('library.dll')
 }
 else{
