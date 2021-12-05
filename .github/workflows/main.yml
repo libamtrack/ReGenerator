@@ -91,7 +91,7 @@ jobs:
           Copy-Item C_samples\*.c out\src\
           New-Item out\include -ItemType directory
           Copy-Item C_samples\*.h out\include\
-          R.exe CMD SHLIB -o library.so out/src/*.c
+          R.exe CMD SHLIB -o library.dll out/src/*.c
         env:
           PKG_CFLAGS: -Iout/include
           

@@ -1,6 +1,11 @@
-install.packages('testit')
+install.packages('testit', repos='https://cloud.r-project.org/')
 require(testit)
-dyn.load('library.so')
+if(Sys.info()['sysname'] == 'Windows'{
+	dyn.load('library.dll')
+}
+else{
+	dyn.load('library.so')
+}
 r_files_dir <- 'out/R'
 for(file in dir(r_files_dir)){
   source(sprintf('%s/%s', r_files_dir, file))
