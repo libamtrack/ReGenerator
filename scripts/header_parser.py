@@ -245,7 +245,7 @@ def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, lis
         if not isinstance(param.size, str):
             continue  # only looping over parameters that have a variable size
         try:
-            if params_dict[param.size].is_in():
+            if params_dict[param.size].is_in() and param.is_in():
                 params_dict[param.size].mode = 'size'
                 params_dict[param.size].targets.append(param.name)
         except KeyError as e:
@@ -346,7 +346,8 @@ def generate_dot_C_wrapper(func_name: str,
     call_proper = [f'''\tAUTO_RET_PARAMS <- {generate_external_call(
         func_name, params_list, '.C'
     )}''']
-    before_call = []
+    before_call_latter = []
+    before_call_former = []
     after_call = []
 
     out_params = list(filter(Parameter.is_out, params_list))
@@ -355,7 +356,7 @@ def generate_dot_C_wrapper(func_name: str,
     logging.debug(f'Creating R function {wrapper_name} (.C)')
 
     for param in size_parameters:
-        before_call.append(
+        before_call_latter.append(
             '\t{} <- min({})'
             .format(param.name,
                     ", ".join([f"length({target})"
@@ -366,14 +367,14 @@ def generate_dot_C_wrapper(func_name: str,
     for param in params_list:
         if 'in' in param.mode:
             wrapper_params.append('\t' + param.name)
-            before_call.append(param.conversion)
+            before_call_former.append(param.conversion)
             if param.size is not None:
-                before_call.append(
+                before_call_latter.append(
                     f'\tstopifnot(length({param.name}) >= {param.size})'
                 )
         if param.is_out():
             if param.mode == 'out':
-                before_call.append(
+                before_call_latter.append(
                     f'\t{param.name} <- {param.Rtype}('
                     f'{param.size if param.size else 1})'
                 )
@@ -386,7 +387,7 @@ def generate_dot_C_wrapper(func_name: str,
     else:
         after_call.append(
             '\tAUTO_RETVAL <- list({})'
-            .format(", ".join([f'"{p.name}" = {p.name}' for p in out_params]))
+            .format(", ".join([f'{p.name} = {p.name}' for p in out_params]))
         )
 
     return '\n'.join(
@@ -394,7 +395,8 @@ def generate_dot_C_wrapper(func_name: str,
         + signature
         + [',\n'.join(wrapper_params)]
         + center
-        + before_call
+        + before_call_former
+        + before_call_latter
         + call_proper
         + after_call
         + ending
@@ -402,7 +404,7 @@ def generate_dot_C_wrapper(func_name: str,
 
 
 def generate_C_wrapper_dot_C(func_name: str,
-                             params_list: list[Parameter]):
+                             params_list: list[Parameter]) -> str:
     """
     Uses a function name, its return type and its parameters (a list of
     :class:`Parameter`) to create a C wrapper to a C function using the limited
@@ -470,21 +472,36 @@ def generate_C_wrapper_dot_C(func_name: str,
         signature.append(f'\t{dot_C_conversions[param.Rtype]} p_{param.name},')
 
         if param.is_array():  # array
-            before_call_latter.append(
-                '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
-                .format(param.raw_type, param.name,
-                        param.raw_type.replace('*', '', 1),
-                        param.size)
-            )
-            before_call_latter.append(
-                '\tfor(int i = 0; i < {1}; i++) {0}[i] = p_{0}[i];'
-                .format(param.name, param.size)
-            )
-            if param.is_out():
-                after_call.append(
-                    '\tfor(int i = 0; i < {1}; i++) p_{0}[i] = {0}[i];'
+            if param.raw_type == 'char*':
+                before_call_latter.append(
+                    '\tchar* {0} = (char*)malloc({1});'
                     .format(param.name, param.size)
                 )
+                before_call_latter.append(
+                    '\tfor(int i = 0; i < {1}; i++) {0}[i] = (*p_{0})[i];'
+                    .format(param.name, param.size)
+                )
+                if param.is_out():
+                    after_call.append(
+                        '\tfor(int i = 0; i < {1}; i++) (*p_{0})[i] = {0}[i];'
+                        .format(param.name, param.size)
+                    )
+            else:
+                before_call_latter.append(
+                    '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
+                    .format(param.raw_type, param.name,
+                            param.raw_type.replace('*', '', 1),
+                            param.size)
+                )
+                before_call_latter.append(
+                    '\tfor(int i = 0; i < {1}; i++) {0}[i] = p_{0}[i];'
+                    .format(param.name, param.size)
+                )
+                if param.is_out():
+                    after_call.append(
+                        '\tfor(int i = 0; i < {1}; i++) p_{0}[i] = {0}[i];'
+                        .format(param.name, param.size)
+                    )
             cleanup.append(
                 f'\tfree({param.name});'
             )
@@ -638,7 +655,7 @@ def generate_C_wrapper_dot_Call(func_name: str,
             SEXP p_n,
             SEXP p_xs,
         ){
-            SEXP RETVAL = PROTECT(AllocVector(REALSXP % MAX_NUM_SEXPTYPE, 1));
+            SEXP RETVAL = PROTECT(allocVector(REALSXP % MAX_NUM_SEXPTYPE, 1));
             int n = *(INTEGER(p_n));
             double* xs = (double*)malloc(sizeof(double) * n);
             for(int i = 0; i < n; i++) xs[i] = (REAL(p_xs))[i];
@@ -657,7 +674,7 @@ def generate_C_wrapper_dot_Call(func_name: str,
     signature = [f'SEXP {func_name}_wrapper( ']
     middle = [
         '){',
-        '\tSEXP RETVAL = PROTECT(AllocVector({} % MAX_NUM_SEXPTYPE, 1));'
+        '\tSEXP RETVAL = PROTECT(allocVector({} % MAX_NUM_SEXPTYPE, 1));'
         .format(type_registration[return_ctype])
     ]
     late = []
@@ -671,20 +688,20 @@ def generate_C_wrapper_dot_Call(func_name: str,
     for param in params_list:
         signature.append(f'\tSEXP p_{param.name},')
         if param.is_array():
-            middle.append(
+            late.append(
                 '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
                 .format(param.raw_type, param.name,
                         param.raw_type.replace('*', '', 1),
                         param.size)
             )
             if param.raw_type == 'char**':
-                middle.append(
+                late.append(
                     '\tfor(int i = 0; i < {2}; i++) {0}[i] = R_STRING((STRING_ELT(p_{0}))[i]);'
                     .format(param.name, param.SEXP_conversion,
                             param.size)
                 )
             else:
-                middle.append(
+                late.append(
                     '\tfor(int i = 0; i < {2}; i++) {0}[i] = ({1}(p_{0}))[i];'
                     .format(param.name, param.SEXP_conversion,
                             param.size)
@@ -896,6 +913,7 @@ def write_cpp_directives(out: TextIO, declarations: bool = False) -> None:
     :param out: C source file stream
     :param declarations: whether to include ``#define``s for CALL_DECL and C_DECL
     """
+    print('#include<stdlib.h>', file=out)
     print('#include<stdbool.h>', file=out)
     print('#include<stdint.h>', file=out)
     print('#include<Rinternals.h>', file=out)
