@@ -517,8 +517,8 @@ bool two_tables_in_one_table_out_params_bool_return_function( float* table_param
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
  * @param[in] size_param_out_one size of first table out param
- * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
- * @param[out] size_param_in_two size of second out table param
+ * @param[out] table_param_out_two second table out param (array of size size_param_out_two)
+ * @param[in] size_param_out_two size of second out table param
  */
 void one_table_in_two_tables_out_params_no_return_function( float* table_param_in_one,
                                                             unsigned int size_param_in_one,
@@ -534,8 +534,8 @@ void one_table_in_two_tables_out_params_no_return_function( float* table_param_i
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
  * @param[in] size_param_out_one size of first table out param
- * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
- * @param[out] size_param_in_two size of second out table param
+ * @param[out] table_param_out_two second table out param (array of size size_param_out_two)
+ * @param[in] size_param_out_two size of second out table param
  *
  * @return max of number of written elements to table_param_out_one and table_param_out_two
  */
@@ -553,8 +553,8 @@ int one_table_in_two_tables_out_params_int_return_function( float* table_param_i
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
  * @param[in] size_param_out_one size of first table out param
- * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
- * @param[out] size_param_in_two size of second out table param
+ * @param[out] table_param_out_two second table out param (array of size size_param_out_two)
+ * @param[in] size_param_out_two size of second out table param
  *
  * @return max of number of written elements to table_param_out_one and table_param_out_two
  */
@@ -572,8 +572,8 @@ unsigned int one_table_in_two_tables_out_params_unsigned_int_return_function( fl
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
  * @param[in] size_param_out_one size of first table out param
- * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
- * @param[out] size_param_in_two size of second out table param
+ * @param[out] table_param_out_two second table out param (array of size size_param_out_two)
+ * @param[in] size_param_out_two size of second out table param
  *
  * @return max value of sum of written elements to table_param_out_one and table_param_out_two
  */
@@ -591,8 +591,8 @@ float one_table_in_two_tables_out_params_float_return_function( float* table_par
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
  * @param[in] size_param_out_one size of first table out param
- * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
- * @param[out] size_param_in_two size of second out table param
+ * @param[out] table_param_out_two second table out param (array of size size_param_out_two)
+ * @param[in] size_param_out_two size of second out table param
  *
  * @return max value of sum of written elements to table_param_out_one and table_param_out_two
  */
@@ -610,8 +610,8 @@ double one_table_in_two_tables_out_params_double_return_function( float* table_p
  * @param[in] size_param_in_one size of first in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
  * @param[in] size_param_out_one size of first table out param
- * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
- * @param[out] size_param_in_two size of second out table param
+ * @param[out] table_param_out_two second table out param (array of size size_param_out_two)
+ * @param[in] size_param_out_two size of second out table param
  *
  * @return boolean value telling if max number of written elements is equal to size_param_out_one and size_param_out_two
  */
@@ -635,8 +635,8 @@ bool one_table_in_two_tables_out_params_bool_return_function( float* table_param
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
  * @param[in] size_param_out_one size of first table out param
- * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
- * @param[out] size_param_in_two size of second out table param
+ * @param[out] table_param_out_two second table out param (array of size size_param_out_two)
+ * @param[in] size_param_out_two size of second out table param
  *
  */
 void two_tables_in_two_tables_out_params_no_return_function( float* table_param_in_one,
@@ -657,8 +657,8 @@ void two_tables_in_two_tables_out_params_no_return_function( float* table_param_
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
  * @param[in] size_param_out_one size of first table out param
- * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
- * @param[out] size_param_in_two size of second out table param
+ * @param[out] table_param_out_two second table out param (array of size size_param_out_two)
+ * @param[in] size_param_out_two size of second out table param
  *
  * @return number of written elements
  */
@@ -680,8 +680,8 @@ int two_tables_in_two_tables_out_params_int_return_function( float* table_param_
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
  * @param[in] size_param_out_one size of first table out param
- * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
- * @param[out] size_param_in_two size of second out table param
+ * @param[out] table_param_out_two second table out param (array of size size_param_out_two)
+ * @param[in] size_param_out_two size of second out table param
  *
  * @return number of written elements
  */
@@ -703,8 +703,8 @@ unsigned int two_tables_in_two_tables_out_params_unsigned_int_return_function( f
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
  * @param[in] size_param_out_one size of first table out param
- * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
- * @param[out] size_param_in_two size of second out table param
+ * @param[out] table_param_out_two second table out param (array of size size_param_out_two)
+ * @param[in] size_param_out_two size of second out table param
  *
  * @return sum of written elements
  */
@@ -726,8 +726,8 @@ float two_tables_in_two_tables_out_params_float_return_function( float* table_pa
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
  * @param[in] size_param_out_one size of first table out param
- * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
- * @param[out] size_param_in_two size of second out table param
+ * @param[out] table_param_out_two second table out param (array of size size_param_out_two)
+ * @param[in] size_param_out_two size of second out table param
  *
  * @return sum of written elements
  */
@@ -750,8 +750,8 @@ double two_tables_in_two_tables_out_params_double_return_function( float* table_
  * @param[in] size_param_in_two size of second in table param
  * @param[out] table_param_out_one first table out param (array of size size_param_out_one)
  * @param[in] size_param_out_one size of first table out param
- * @param[out] table_param_in_two second table out param (array of size size_param_out_two)
- * @param[out] size_param_in_two size of second out table param
+ * @param[out] table_param_out_two second table out param (array of size size_param_out_two)
+ * @param[in] size_param_out_two size of second out table param
  *
  * @return boolean value telling if number of written elements is equal to size_param_out_one
  */
