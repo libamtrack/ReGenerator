@@ -337,7 +337,7 @@ def generate_dot_C_wrapper(func_name: str,
     :return: The R wrapper for the provided C function
     :rtype: str
     """
-    docstring = ['#` @export'] if export else []
+    docstring = ['#\' @export'] if export else []
     wrapper_name = func_name.replace('_', '.')
     signature = [f'{wrapper_name} <- function(']
     center = ['){']
@@ -586,7 +586,7 @@ def generate_dot_Call_wrapper(func_name: str,
     :return: The R wrapper for the provided C function
     :rtype: str
     """
-    docstring = ['#` @export'] if export else []
+    docstring = ['#\' @export'] if export else []
     wrapper_name = func_name.replace('_', '.')
     signature = [f'{wrapper_name} <- function(']
     wrapper_params = []
@@ -740,6 +740,40 @@ def generate_C_wrapper_dot_Call(func_name: str,
     )
 
 
+# regular expressions used to extract information about function from doxygen
+# get rid of doxygen-typical notation for comments
+discarded_characters_pattern = re.compile(r'(/\*\*)|(\*/)|(^\s*\*\s*)|(///)', re.MULTILINE)
+# extract the `@return` command
+return_pattern = re.compile(r'[@\\]return.*$', re.DOTALL)
+# remove everything after the first parameter definition
+params_pattern = re.compile(r'[@\\]param.*$', re.DOTALL)
+
+
+def extract_doxygen(func: CppMethod, params: list[Parameter]):
+    arguments = []
+    raw = discarded_characters_pattern.sub('', func['doxygen'])
+
+    if any(p.is_out() for p in params):
+        returns = ["#' @return", "#' \\itemize{", "#' }"]
+    else:
+        returns = ["#' " + s for s in return_pattern.search(raw).group(0).split('\n')]
+
+    raw = params_pattern.sub('', raw).split('\n')
+    description = ["#' " + s for s in raw]
+
+    for param in params:
+        if param.is_out():
+            returns.insert(-1, f"#'    \\item {param.name}: {param.description}")
+        else:
+            arguments.append(f"#' @param {param.name} {param.description}")
+
+    return '\n'.join(
+        description
+        + arguments
+        + returns
+    )
+
+
 def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                                     out_dir: str,
                                     include_dir: Union[str, PathLike[str]],
@@ -769,7 +803,7 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
 
     ret = set()
     for func in extract_functions_from_file(path):
-        func['rtnType'] = re.sub(type_qualifiers, '', func['rtnType'])
+        func['rtnType'] = type_qualifiers.sub('', func['rtnType'])
         # we're only interested in scalar values
         try:
             absolute_path = Path(path).absolute()
@@ -807,7 +841,8 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                     )
                     logging.info(message)
                     r_wrapper = c_wrapper = ''
-
+                if r_wrapper:
+                    r_wrapper = extract_doxygen(func, params) + '\n' + r_wrapper
                 r_wrappers.append(r_wrapper)
                 c_wrappers.append(c_wrapper)
         except Exception as e:
