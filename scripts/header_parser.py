@@ -127,6 +127,7 @@ class Parameter:
     A parameter for a C function, as well as information about its doxygen
     comment and size (if array)
     """
+
     def __init__(self,
                  desc: CppVariable,
                  ordinal: int,
@@ -135,7 +136,10 @@ class Parameter:
                  description: str = ""):
         self.ord = ordinal
         self.ctype = eval(desc['ctypes_type'])
-        self.raw_type: str = desc['raw_type'] + '*'*(desc['array'] + desc['pointer'])
+        self.raw_type: str = (
+            desc['raw_type'] +
+            '*' * (desc['array'] + desc['pointer'])
+        )
         self.name: str = desc['name']
         self.mode: str = mode[1:-1].lower() if mode != '' else 'in'
         self.size: Union[str, int, None] = size
@@ -240,7 +244,9 @@ def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, lis
             ).format(abs_path, line_no, func_name, e)
             raise ValueError(message) from e
 
-    params_dict: dict[str, Parameter] = {param.name: param for param in params_list}
+    params_dict: dict[str, Parameter] = {
+        param.name: param for param in params_list
+    }
     for param in params_list:
         if not isinstance(param.size, str):
             continue  # only looping over parameters that have a variable size
@@ -280,7 +286,8 @@ def generate_external_call(func_name: str,
         ret.append(', ' + ', '.join(
             # in .C we want to name the parameters
             # so that we can later access them by name
-            (param.name if method == '.Call' else '{0} = {0}'.format(param.name))
+            (param.name if method ==
+             '.Call' else '{0} = {0}'.format(param.name))
             for param in params_list))
     if library_name is not None:
         ret.append(f'PACKAGE = "{library_name}"')
@@ -539,7 +546,8 @@ def generate_C_wrapper_dot_C(func_name: str,
                     '\t*p_{0} = {0};'.format(param.name)
                 )
 
-    signature[-1] = signature[-1][:-1]  # we need to trim the ',' after the last argument
+    # we need to trim the ',' after the last argument
+    signature[-1] = signature[-1][:-1]
     return '\n'.join(
         signature
         + middle
@@ -664,7 +672,7 @@ def generate_C_wrapper_dot_Call(func_name: str,
             UNPROTECT(1);
             return RETVAL;
         }
-    
+
     :param func_name: name of the base function
     :param params_list: list of :class:`Parameter`, parameters of ``func_name``
     :param return_type: return type of the base function, e.g. ``unsigned int``
@@ -730,7 +738,8 @@ def generate_C_wrapper_dot_Call(func_name: str,
                     .format(param.name, param.SEXP_conversion)
                 )
                 call.append(f'\tfree({param.name});')
-    signature[-1] = signature[-1][:-1]  # we need to trim the ',' after the last argument
+    # we need to trim the ',' after the last argument
+    signature[-1] = signature[-1][:-1]
     return '\n'.join(
         signature
         + middle
@@ -742,7 +751,10 @@ def generate_C_wrapper_dot_Call(func_name: str,
 
 # regular expressions used to extract information about function from doxygen
 # get rid of doxygen-typical notation for comments
-discarded_characters_pattern = re.compile(r'(/\*\*)|(\*/)|(^\s*\*\s*)|(///)', re.MULTILINE)
+discarded_characters_pattern = re.compile(
+    r'(/\*\*)|(\*/)|(^\s*\*\s*)|(///)',
+    re.MULTILINE
+)
 # extract the `@return` command
 return_pattern = re.compile(r'[@\\]return.*$', re.DOTALL)
 # remove everything after the first parameter definition
@@ -756,14 +768,20 @@ def extract_doxygen(func: CppMethod, params: list[Parameter]):
     if any(p.is_out() for p in params):
         returns = ["#' @return", "#' \\itemize{", "#' }"]
     else:
-        returns = ["#' " + s for s in return_pattern.search(raw).group(0).split('\n')]
+        returns = [
+            "#' " + s for s
+            in return_pattern.search(raw).group(0).split('\n')
+        ]
 
     raw = params_pattern.sub('', raw).split('\n')
     description = ["#' " + s for s in raw]
 
     for param in params:
         if param.is_out():
-            returns.insert(-1, f"#'    \\item {param.name}: {param.description}")
+            returns.insert(
+                -1,
+                f"#'    \\item {param.name}: {param.description}"
+            )
         else:
             arguments.append(f"#' @param {param.name} {param.description}")
 
@@ -795,7 +813,8 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
     """
     Path(out_dir, 'R').mkdir(parents=True, exist_ok=True)
     r_out_path = Path(out_dir, 'R', Path(path).name.replace('.h', '.R'))
-    c_out_path = Path(out_dir, 'src', Path(path).name.replace('.h', '_wrappers.c'))
+    c_out_path = Path(out_dir, 'src',
+                      Path(path).name.replace('.h', '_wrappers.c'))
     r_wrappers = []
     c_wrappers = []
     dot_c_functions = []
@@ -813,18 +832,22 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
             if namespace is None or name in namespace:
                 # likewise, if no NAMESPACE file is provided, we export all functions
                 export = exp_namespace is None or name in exp_namespace
-                if any(map(Parameter.is_out, params)):  # create a .C wrapper if there are output parameters
+                # create a .C wrapper if there are output parameters
+                if any(map(Parameter.is_out, params)):
                     r_wrapper = generate_dot_C_wrapper(name, params, export)
                     c_wrapper = generate_C_wrapper_dot_C(name, params)
                     ret.add(name)
 
                     print('extern void', name + '_wrapper', '(',
-                          ', '.join(dot_C_conversions[p.Rtype] for p in params),
+                          ', '.join(dot_C_conversions[p.Rtype]
+                                    for p in params),
                           ');', file=init_file)
                     dot_c_functions.append((name + '_wrapper', params))
                 elif func['rtnType'] != 'void':  # create a .Call/.External wrapper
                     r_wrapper = generate_dot_Call_wrapper(name, params, export)
-                    c_wrapper = generate_C_wrapper_dot_Call(name, params, func['rtnType'])
+                    c_wrapper = generate_C_wrapper_dot_Call(
+                        name, params, func['rtnType']
+                    )
                     ret.add(name)
                     print(
                         'extern SEXP', name + '_wrapper', '(',
@@ -842,7 +865,8 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                     logging.info(message)
                     r_wrapper = c_wrapper = ''
                 if r_wrapper:
-                    r_wrapper = extract_doxygen(func, params) + '\n' + r_wrapper
+                    r_wrapper = (extract_doxygen(func, params)
+                                 + '\n' + r_wrapper)
                 r_wrappers.append(r_wrapper)
                 c_wrappers.append(c_wrapper)
         except Exception as e:
@@ -862,8 +886,12 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
         try:
             with open(c_out_path, 'w', encoding='utf-8') as fout:
                 write_cpp_directives(fout)
-                c_include_filename = PurePosixPath(path).relative_to(PurePosixPath(include_dir))
-                print(f'#include "{c_include_filename}"', end='\n\n\n', file=fout)
+                c_include_filename = (
+                    PurePosixPath(path)
+                    .relative_to(PurePosixPath(include_dir))
+                )
+                print(f'#include "{c_include_filename}"',
+                      end='\n\n\n', file=fout)
                 print('\n\n\n'.join(filter(None, c_wrappers)), file=fout)
         except IOError as e:
             message = f'Can\'t write C wrappers to {c_out_path}: {e}'
@@ -892,7 +920,8 @@ def read_namespace(path: str) -> Union[tuple[None, None], tuple[set[str], set[st
         message = 'Couldn\'t retrieve namespace file "{}", assuming all functions'
         logging.warning(message.format(Path(path).absolute()))
         return None, None
-    names = map(lambda x: re.sub(r'#.*$', '', x).strip(), names)  # remove comments
+    names = map(lambda x: re.sub(r'#.*$', '', x).strip(),
+                names)  # remove comments
     names = filter(None, names)  # remove empty lines
     export = set()
     wrapper = set()
@@ -954,8 +983,11 @@ def write_cpp_directives(out: TextIO, declarations: bool = False) -> None:
     print('#include<Rinternals.h>', file=out)
     print('#include<R_ext/Rdynload.h>', file=out, end='\n\n')
     if declarations:
-        print('#define CALL_DECL(name, n) {#name, (DL_FUNC) &name, n}', file=out)
-        print('#define C_DECL(name, n) {#name, (DL_FUNC) &name, n, name ## _args}',
+        print('#define CALL_DECL(name, n) '
+              '{#name, (DL_FUNC) &name, n}',
+              file=out)
+        print('#define C_DECL(name, n) {#name, '
+              '(DL_FUNC) &name, n, name ## _args}',
               file=out, end='\n\n')
 
 
