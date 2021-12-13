@@ -1,0 +1,11 @@
+Package: testpackage
+Title: C samples for ReGenerator
+Version: 0.1
+Authors@R: c(person("Magdalena", "Pastula", role = "aut"),
+             person("Pawel", "Tyszko", role = "aut"),
+             person("Leszek", "Grzanka", role = ("rev", "ths")))
+Description: A bunch of sample code written to test the capabilities of ReGenerator
+Depends: R (>= 3.1.0)
+License: MIT
+LazyData: true
+RoxygenNote: 7.1.2

@@ -3,6 +3,9 @@ from typing import Optional
 
 
 class Expression:
+    """
+    Helper class used to break down (and validate) arithmetic expressions
+    """
 
     operators = re.compile(r'[-+*/]')
 
