@@ -95,6 +95,8 @@ from typing import Union, Literal, TextIO
 from CppHeaderParser import CppHeader, CppMethod, CppVariable
 
 from ctype_translator import *
+from expressions import Expression
+
 
 #  This regex matches a doxygen description of a parameter, including:
 #  - its access mode (whether it's in/out/in,out)
@@ -112,7 +114,7 @@ param_regex = re.compile(
 #  This regex searches for matches the phrase 'array of length/size ___'
 #  and retrieves the last term (a number or a name) to use for setting
 #  or checking length in the wrapper.
-array_regex = re.compile(r'array\s*of\s*(length|size)\s*(?P<lname>[a-z0-9_]+)')
+array_regex = re.compile(r'array\s*of\s*(length|size)\s*(?P<lname>[a-z0-9_^*/+-]+)')
 
 
 type_qualifiers = re.compile(r'volatile|const|restrict|register')
@@ -142,25 +144,9 @@ class Parameter:
         )
         self.name: str = desc['name']
         self.mode: str = mode[1:-1].lower() if mode != '' else 'in'
-        self.size: Union[str, int, None] = size
+        self.size: Union[str, int, None, Expression] = Expression(size)
         self.targets = []  # only used with size parameters
         self.description = description.strip()
-        if size:
-            try:
-                if size.startswith('0x'):
-                    self.size = int(size, 16)
-                elif size[0] == '0':
-                    self.size = int(size, 8)
-                else:
-                    self.size = int(size)
-
-            except ValueError:
-                if size[0].isnumeric():
-                    message = (
-                        f'{size} is neither a variable '
-                        'name nor a numeric literal'
-                    )
-                    raise ValueError(message)
 
     def is_out(self):
         return 'out' in self.mode
@@ -377,13 +363,14 @@ def generate_dot_C_wrapper(func_name: str,
             before_call_former.append(param.conversion)
             if param.size is not None:
                 before_call_latter.append(
-                    f'\tstopifnot(length({param.name}) >= {param.size})'
+                    f'\tstopifnot(length({param.name}) >= '
+                    f'{str(param.size).replace("/", "%/%")})'
                 )
         if param.is_out():
             if param.mode == 'out':
                 before_call_latter.append(
                     f'\t{param.name} <- {param.Rtype}('
-                    f'{param.size if param.size else 1})'
+                    f'{str(param.size).replace("/", "%/%") if param.size else 1})'
                 )
             after_call.append(
                 f'\t{param.name} <- AUTO_RET_PARAMS${param.name}'
@@ -495,7 +482,7 @@ def generate_C_wrapper_dot_C(func_name: str,
                     )
             else:
                 before_call_latter.append(
-                    '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
+                    '\t{0} {1} = ({0})malloc(sizeof({2}) * ({3}));'
                     .format(param.raw_type, param.name,
                             param.raw_type.replace('*', '', 1),
                             param.size)
@@ -616,7 +603,8 @@ def generate_dot_Call_wrapper(func_name: str,
             wrapper_params.append('\t' + param.name)
             if param in sized_parameters:
                 size_checks.append(
-                    f'\tstopifnot(length({param.name}) >= {param.size})'
+                    f'\tstopifnot(length({param.name}) >= '
+                    f'{str(param.size).replace("/", "%/%")})'
                 )
             type_conversions.append(param.conversion)
         else:
@@ -697,7 +685,7 @@ def generate_C_wrapper_dot_Call(func_name: str,
         signature.append(f'\tSEXP p_{param.name},')
         if param.is_array():
             late.append(
-                '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
+                '\t{0} {1} = ({0})malloc(sizeof({2}) * ({3}));'
                 .format(param.raw_type, param.name,
                         param.raw_type.replace('*', '', 1),
                         param.size)
