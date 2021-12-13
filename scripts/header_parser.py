@@ -75,10 +75,6 @@ False
 False
 >>> m.group('lname')
 'number_of_buckets'
-
->>> m = array_regex.fullmatch('array of length -5')
->>> m is None
-True
 """
 import logging
 import re

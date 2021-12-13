@@ -36,7 +36,9 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run doctests
-        run: python -m doctest -v scripts/header_parser.py
+        run: |
+          python -m doctest -v scripts/header_parser.py
+          python -m doctest -v scripts/expressions.py
 
       - name: Run wrapper generator
         run: python scripts/header_parser.py C_samples/*.h -vv

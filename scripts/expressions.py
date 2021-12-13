@@ -5,6 +5,31 @@ from typing import Optional
 class Expression:
     """
     Helper class used to break down (and validate) arithmetic expressions
+    Examples of usage:
+    >>> Expression('5')
+    5
+    >>> Expression('0xff')
+    255
+    >>> Expression('037')
+    31
+    >>> Expression('n')
+    'n'
+
+    >>> e = Expression('5*n')
+    >>> e.left
+    5
+    >>> e.op
+    '*'
+    >>> e.right
+    'n'
+
+    >>> e = Expression('a+b-c')
+    >>> e.left
+    'a'
+    >>> e.op
+    '+'
+    >>> e.right
+    Expression('b-c')
     """
 
     operators = re.compile(r'[-+*/]')
