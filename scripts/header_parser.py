@@ -305,22 +305,23 @@ def generate_dot_C_wrapper(func_name: str,
 
     Will produce a wrapper like this::
 
+        # docstrings omitted
         pressure.step <- function(
             dt,
             widths,
             pressures
         ){
-            n <- min(length(widths), length(pressures), length(dp))
             dt <- as.single(dt)
             widths <- as.single(widths)
-            stopifnot(length(widths) >= n)
             pressures <- as.single(pressures)
+            n <- min(length(widths), length(pressures))
+            stopifnot(length(widths) >= n)
             stopifnot(length(pressures) >= n)
             dp <- single(n)
-            AUTO_RET_PARAMS <- .C("pressure_step", n, dt, widths, pressures, dp)
+            AUTO_RET_PARAMS <- .C("pressure_step_wrapper", n = n, dt = dt, widths = widths, pressures = pressures, dp = dp)
             pressures <- AUTO_RET_PARAMS$pressures
             dp <- AUTO_RET_PARAMS$dp
-            AUTO_RETVAL <- list("pressures" = pressures, "dp" = dp)
+            AUTO_RETVAL <- list(pressures = pressures, dp = dp)
             return(AUTO_RETVAL)
         }
 
@@ -430,11 +431,11 @@ def generate_C_wrapper_dot_C(func_name: str,
         ){
             int n = *p_n;
             float dt = *p_dt;
-            float* widths = (float*)malloc(sizeof(float) * n);
+            float* widths = (float*)malloc(sizeof(float) * (n));
             for(int i = 0; i < n; i++) widths[i] = p_widths[i];
-            float* pressures = (float*)malloc(sizeof(float) * n);
+            float* pressures = (float*)malloc(sizeof(float) * (n));
             for(int i = 0; i < n; i++) pressures[i] = p_pressures[i];
-            float* dp = (float*)malloc(sizeof(float) * n);
+            float* dp = (float*)malloc(sizeof(float) * (n));
             for(int i = 0; i < n; i++) dp[i] = p_dp[i];
             pressure_step(n, dt, widths, pressures, dp);
             for(int i = 0; i < n; i++) p_pressures[i] = pressures[i];
@@ -557,7 +558,7 @@ def generate_dot_Call_wrapper(func_name: str,
     Example: the function defined as follows::
 
         /**
-         * calculates time step for balancing pressure in pipes
+         * calculates harmonic mean of an array
          * @\0param n  number of items
          * @\0param xs numbers to take mean of (array of length n)
          * @\0return harmonic mean of xs
@@ -566,6 +567,7 @@ def generate_dot_Call_wrapper(func_name: str,
 
     Will produce a wrapper like this::
 
+        # docstrings omitted
         harmonic.mean <- function(
             xs
         ){
@@ -649,11 +651,11 @@ def generate_C_wrapper_dot_Call(func_name: str,
         /* includes omitted */
         SEXP harmonic_mean_wrapper(
             SEXP p_n,
-            SEXP p_xs,
+            SEXP p_xs
         ){
             SEXP RETVAL = PROTECT(allocVector(REALSXP % MAX_NUM_SEXPTYPE, 1));
             int n = *(INTEGER(p_n));
-            double* xs = (double*)malloc(sizeof(double) * n);
+            double* xs = (double*)malloc(sizeof(double) * (n));
             for(int i = 0; i < n; i++) xs[i] = (REAL(p_xs))[i];
             *(REAL(RETVAL)) = harmonic_mean(n, xs);
             free(xs);
