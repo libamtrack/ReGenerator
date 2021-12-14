@@ -8,7 +8,8 @@ from shutil import copy
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Prepares package files for building'
+        description='''Prepares package files for building 
+        AFTER running header_parser.py'''
     )
     parser.add_argument(
         'sources_dir', nargs='+',
