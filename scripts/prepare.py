@@ -16,7 +16,7 @@ def main():
         type=Path
     )
     parser.add_argument(
-        '-d', '-desc-path',
+        '-d', '--desc-path',
         dest='desc_file', nargs='?',
         metavar='DESCRIPTION-file',
         help='''The path to the DESCRIPTION file for your package,
