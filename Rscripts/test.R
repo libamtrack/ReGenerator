@@ -1,11 +1,14 @@
-install.packages('testit', repos='https://cloud.r-project.org/')
-require(testit)
+install.packages(c('roxygen2', 'pkgbuild', 'testit'), repos='https://cloud.r-project.org/')
+library(testit)
+library(roxygen2)
+setwd('out')
+# build NAMESPACE file
+roxygenise(load_code = 'source', roclets = 'namespace')
+# build dev package
+roxygenise(roclets = c('collate', 'rd'))
+# load package
+library(ReGeneratorTest)
 
-dyn.load(sprintf('out/src/testpackage%s', .Platform$dynlib.ext))
-r_files_dir <- 'out/R'
-for(file in dir(r_files_dir)){
-  source(sprintf('%s/%s', r_files_dir, file))
-}
 # Asserts for a few select functions
 assert(no.params.int.return.function() %==% as.integer(-1))
 assert(no.params.unsigned.int.return.function() %==% as.integer(10));

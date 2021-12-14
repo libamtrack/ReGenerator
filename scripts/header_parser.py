@@ -793,11 +793,12 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
     :param out_dir: where to create files with wrappers
     :param init_file: path to ``init.c``, which is where symbol registration
         for R interaction typically resides
+    :param pkg_name: name of the target package, must be the same as the name field in DESCRIPTION
     :param namespace: functions for which we want wrappers to be created
     :param exp_namespace: functions which we want to export in final package
     :return: information about symbols that need to be registered
     """
-    Path(out_dir, 'R').mkdir(parents=True, exist_ok=True)
+    Path(out_dir, 'R')
     r_out_path = Path(out_dir, 'R', Path(path).name.replace('.h', '.R'))
     c_out_path = Path(out_dir, 'src',
                       Path(path).name.replace('.h', '_wrappers.c'))
@@ -991,6 +992,9 @@ additionally match kazoo.txt, and **oo.txt will match all of the above, as \
 well as a/oo.txt and a/b/zoo.txt''',
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
+    parser.add_argument('name', metavar='package_name',
+                        help='The name of your package, must be the '
+                             'same as the name field in your DESCRIPTION')
     parser.add_argument('infile', nargs='+',
                         help='C header files (or glob patterns) to be parsed')
     parser.add_argument('-o', '--out-dir', dest='out_dir', metavar='output_dir',
@@ -1004,10 +1008,10 @@ well as a/oo.txt and a/b/zoo.txt''',
                         default=None)
     parser.add_argument('-v', '--verbose', dest='verbose', action='count',
                         help='Log more information, can be stacked up to 2 times. '
-                        'Concels out with -q', default=0)
+                             'Concels out with -q', default=0)
     parser.add_argument('-q', '--quiet', dest='quiet', action='count',
                         help='Log less information, can be stacked up to 2 times. '
-                        'Cancels out with -v', default=0)
+                             'Cancels out with -v', default=0)
     args = parser.parse_args()
 
     verbosity = min(5, max(0, 2+args.verbose-args.quiet))
@@ -1032,8 +1036,20 @@ well as a/oo.txt and a/b/zoo.txt''',
 
     c_path = Path(args.out_dir, 'src')
     c_path.mkdir(exist_ok=True, parents=True)
+    r_path = Path(args.out_dir, 'R')
+    r_path.mkdir(exist_ok=True, parents=True)
     dot_C_funcs = []
     dot_Call_funcs = []
+
+    try:
+        with open(r_path / f'{args.name}.R', 'w') as fout:
+            print(
+                f"#' @useDynLib {args.name}, .registration = TRUE ",
+                file=fout
+            )
+            print('NULL\n#> NULL', file=fout)
+    except IOError as e:
+        logging.critical(f'Can\'t open {r_path / f"{args.name}"}: {e}')
 
     try:
         with open(c_path / 'init.c', 'w') as project_base:
