@@ -5,7 +5,7 @@ require(testit)
 # }else{
 # 	dyn.load('testpackage.so')
 # }
-dyn.load(sprintf('testpackage%s', .Platform$dynlib.ext)
+dyn.load(sprintf('testpackage%s', .Platform$dynlib.ext))
 r_files_dir <- 'out/R'
 for(file in dir(r_files_dir)){
   source(sprintf('%s/%s', r_files_dir, file))
