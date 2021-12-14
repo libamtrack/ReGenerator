@@ -47,15 +47,7 @@ jobs:
      
       - name: Setup R
         run: sudo apt-get install -y r-base-core
-        
-#      - name: Build package
-#        run: |
-#          cp C_samples/*.c out/src/
-#          mkdir out/include
-#          cp C_samples/*.h out/include/
-#          R CMD SHLIB -o library.so out/src/*.c
-#        env:
-#          PKG_CFLAGS: -Iout/include
+
       - name: Build package
         run: |
           sudo Rscript Rscripts/roxygen.R
@@ -92,15 +84,10 @@ jobs:
         run: |
           choco install -y r
           choco install -y rtools
-          
+
       - name: Build package
         run: |
-          Copy-Item C_samples\*.c out\src\
-          New-Item out\include -ItemType directory
-          Copy-Item C_samples\*.h out\include\
-          R.exe CMD SHLIB -o library.dll out/src/*.c
-        env:
-          PKG_CFLAGS: -Iout/include
+          sudo Rscript Rscripts/roxygen.R
           
       - name: Test package
         run: |
@@ -137,12 +124,7 @@ jobs:
         
       - name: Build package
         run: |
-          cp C_samples/*.c out/src/
-          mkdir out/include
-          cp C_samples/*.h out/include/
-          R CMD SHLIB -o library.so out/src/*.c
-        env:
-          PKG_CFLAGS: -Iout/include
+          sudo Rscript Rscripts/roxygen.R
           
       - name: Test package
         run: |
