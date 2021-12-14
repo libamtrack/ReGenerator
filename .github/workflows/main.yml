@@ -75,10 +75,14 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run doctests
-        run: python -m doctest -v scripts/header_parser.py
+        run: |
+          python -m doctest -v scripts/header_parser.py
+          python -m doctest -v scripts/expressions.py
 
       - name: Run wrapper generator
-        run: python scripts/header_parser.py C_samples/*.h -vv
+        run: |
+          python scripts/header_parser.py C_samples/*.h -vv
+          python scripts/prepare.py C_samples DESCRIPTION -o out -v 0.1
         
       - name: Setup R
         run: |
@@ -112,10 +116,14 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run doctests
-        run: python -m doctest -v scripts/header_parser.py
+        run: |
+          python -m doctest -v scripts/header_parser.py
+          python -m doctest -v scripts/expressions.py
 
       - name: Run wrapper generator
-        run: python scripts/header_parser.py C_samples/*.h -vv
+        run: |
+          python scripts/header_parser.py C_samples/*.h -vv
+          python scripts/prepare.py C_samples DESCRIPTION -o out -v 0.1
      
       - name: Setup R
         run: |
