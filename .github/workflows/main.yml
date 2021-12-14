@@ -87,7 +87,7 @@ jobs:
 
       - name: Build package
         run: |
-          sudo Rscript Rscripts/roxygen.R
+          Rscript Rscripts/roxygen.R
           
       - name: Test package
         run: |
@@ -124,7 +124,7 @@ jobs:
         
       - name: Build package
         run: |
-          sudo Rscript Rscripts/roxygen.R
+          Rscript Rscripts/roxygen.R
           
       - name: Test package
         run: |
