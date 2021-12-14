@@ -2,7 +2,8 @@ from ctypes import *
 from collections import defaultdict
 
 
-__all__ = ['mapping', 'type_registration', 'SEXP_conversion', 'str_to_ctype', 'dot_C_conversions']
+__all__ = ['mapping', 'type_registration',
+           'SEXP_conversion', 'str_to_ctype', 'dot_C_conversions']
 
 
 # mapping from C type to vector types ('modes') as they are seen in R
@@ -134,7 +135,8 @@ def str_to_ctype(type_: str):
     elif 'int' in type_ and type != 'int':  # 'int' is omitted where it's not mandatory
         return str_to_ctype(type_.replace('int', ''))
     else:
-        return declarations_conversion[type_]  # will raise a KeyError that we'll want to catch later
+        # will raise a KeyError that we'll want to catch later
+        return declarations_conversion[type_]
 
 
 # adding pointers because we also want to cover arrays

@@ -75,10 +75,6 @@ False
 False
 >>> m.group('lname')
 'number_of_buckets'
-
->>> m = array_regex.fullmatch('array of length -5')
->>> m is None
-True
 """
 import logging
 import re
@@ -95,6 +91,8 @@ from typing import Union, Literal, TextIO
 from CppHeaderParser import CppHeader, CppMethod, CppVariable
 
 from ctype_translator import *
+from expressions import Expression
+
 
 #  This regex matches a doxygen description of a parameter, including:
 #  - its access mode (whether it's in/out/in,out)
@@ -112,7 +110,7 @@ param_regex = re.compile(
 #  This regex searches for matches the phrase 'array of length/size ___'
 #  and retrieves the last term (a number or a name) to use for setting
 #  or checking length in the wrapper.
-array_regex = re.compile(r'array\s*of\s*(length|size)\s*(?P<lname>[a-z0-9_]+)')
+array_regex = re.compile(r'array\s*of\s*(length|size)\s*(?P<lname>[a-z0-9_^*/+-]+)')
 
 
 type_qualifiers = re.compile(r'volatile|const|restrict|register')
@@ -127,6 +125,7 @@ class Parameter:
     A parameter for a C function, as well as information about its doxygen
     comment and size (if array)
     """
+
     def __init__(self,
                  desc: CppVariable,
                  ordinal: int,
@@ -135,28 +134,15 @@ class Parameter:
                  description: str = ""):
         self.ord = ordinal
         self.ctype = eval(desc['ctypes_type'])
-        self.raw_type: str = desc['raw_type'] + '*'*(desc['array'] + desc['pointer'])
+        self.raw_type: str = (
+            desc['raw_type'] +
+            '*' * (desc['array'] + desc['pointer'])
+        )
         self.name: str = desc['name']
         self.mode: str = mode[1:-1].lower() if mode != '' else 'in'
-        self.size: Union[str, int, None] = size
+        self.size: Union[str, int, None, Expression] = Expression(size)
         self.targets = []  # only used with size parameters
         self.description = description.strip()
-        if size:
-            try:
-                if size.startswith('0x'):
-                    self.size = int(size, 16)
-                elif size[0] == '0':
-                    self.size = int(size, 8)
-                else:
-                    self.size = int(size)
-
-            except ValueError:
-                if size[0].isnumeric():
-                    message = (
-                        f'{size} is neither a variable '
-                        'name nor a numeric literal'
-                    )
-                    raise ValueError(message)
 
     def is_out(self):
         return 'out' in self.mode
@@ -240,7 +226,9 @@ def parse_function_info(fun: CppMethod, abs_path: Path = None) -> tuple[str, lis
             ).format(abs_path, line_no, func_name, e)
             raise ValueError(message) from e
 
-    params_dict: dict[str, Parameter] = {param.name: param for param in params_list}
+    params_dict: dict[str, Parameter] = {
+        param.name: param for param in params_list
+    }
     for param in params_list:
         if not isinstance(param.size, str):
             continue  # only looping over parameters that have a variable size
@@ -280,7 +268,8 @@ def generate_external_call(func_name: str,
         ret.append(', ' + ', '.join(
             # in .C we want to name the parameters
             # so that we can later access them by name
-            (param.name if method == '.Call' else '{0} = {0}'.format(param.name))
+            (param.name if method ==
+             '.Call' else '{0} = {0}'.format(param.name))
             for param in params_list))
     if library_name is not None:
         ret.append(f'PACKAGE = "{library_name}"')
@@ -312,22 +301,23 @@ def generate_dot_C_wrapper(func_name: str,
 
     Will produce a wrapper like this::
 
+        # docstrings omitted
         pressure.step <- function(
             dt,
             widths,
             pressures
         ){
-            n <- min(length(widths), length(pressures), length(dp))
             dt <- as.single(dt)
             widths <- as.single(widths)
-            stopifnot(length(widths) >= n)
             pressures <- as.single(pressures)
+            n <- min(length(widths), length(pressures))
+            stopifnot(length(widths) >= n)
             stopifnot(length(pressures) >= n)
             dp <- single(n)
-            AUTO_RET_PARAMS <- .C("pressure_step", n, dt, widths, pressures, dp)
+            AUTO_RET_PARAMS <- .C("pressure_step_wrapper", n = n, dt = dt, widths = widths, pressures = pressures, dp = dp)
             pressures <- AUTO_RET_PARAMS$pressures
             dp <- AUTO_RET_PARAMS$dp
-            AUTO_RETVAL <- list("pressures" = pressures, "dp" = dp)
+            AUTO_RETVAL <- list(pressures = pressures, dp = dp)
             return(AUTO_RETVAL)
         }
 
@@ -337,7 +327,7 @@ def generate_dot_C_wrapper(func_name: str,
     :return: The R wrapper for the provided C function
     :rtype: str
     """
-    docstring = ['#` @export'] if export else []
+    docstring = ['#\' @export'] if export else []
     wrapper_name = func_name.replace('_', '.')
     signature = [f'{wrapper_name} <- function(']
     center = ['){']
@@ -370,13 +360,14 @@ def generate_dot_C_wrapper(func_name: str,
             before_call_former.append(param.conversion)
             if param.size is not None:
                 before_call_latter.append(
-                    f'\tstopifnot(length({param.name}) >= {param.size})'
+                    f'\tstopifnot(length({param.name}) >= '
+                    f'{str(param.size).replace("/", "%/%")})'
                 )
         if param.is_out():
             if param.mode == 'out':
                 before_call_latter.append(
                     f'\t{param.name} <- {param.Rtype}('
-                    f'{param.size if param.size else 1})'
+                    f'{str(param.size).replace("/", "%/%") if param.size else 1})'
                 )
             after_call.append(
                 f'\t{param.name} <- AUTO_RET_PARAMS${param.name}'
@@ -436,11 +427,11 @@ def generate_C_wrapper_dot_C(func_name: str,
         ){
             int n = *p_n;
             float dt = *p_dt;
-            float* widths = (float*)malloc(sizeof(float) * n);
+            float* widths = (float*)malloc(sizeof(float) * (n));
             for(int i = 0; i < n; i++) widths[i] = p_widths[i];
-            float* pressures = (float*)malloc(sizeof(float) * n);
+            float* pressures = (float*)malloc(sizeof(float) * (n));
             for(int i = 0; i < n; i++) pressures[i] = p_pressures[i];
-            float* dp = (float*)malloc(sizeof(float) * n);
+            float* dp = (float*)malloc(sizeof(float) * (n));
             for(int i = 0; i < n; i++) dp[i] = p_dp[i];
             pressure_step(n, dt, widths, pressures, dp);
             for(int i = 0; i < n; i++) p_pressures[i] = pressures[i];
@@ -488,7 +479,7 @@ def generate_C_wrapper_dot_C(func_name: str,
                     )
             else:
                 before_call_latter.append(
-                    '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
+                    '\t{0} {1} = ({0})malloc(sizeof({2}) * ({3}));'
                     .format(param.raw_type, param.name,
                             param.raw_type.replace('*', '', 1),
                             param.size)
@@ -539,7 +530,8 @@ def generate_C_wrapper_dot_C(func_name: str,
                     '\t*p_{0} = {0};'.format(param.name)
                 )
 
-    signature[-1] = signature[-1][:-1]  # we need to trim the ',' after the last argument
+    # we need to trim the ',' after the last argument
+    signature[-1] = signature[-1][:-1]
     return '\n'.join(
         signature
         + middle
@@ -562,7 +554,7 @@ def generate_dot_Call_wrapper(func_name: str,
     Example: the function defined as follows::
 
         /**
-         * calculates time step for balancing pressure in pipes
+         * calculates harmonic mean of an array
          * @\0param n  number of items
          * @\0param xs numbers to take mean of (array of length n)
          * @\0return harmonic mean of xs
@@ -571,6 +563,7 @@ def generate_dot_Call_wrapper(func_name: str,
 
     Will produce a wrapper like this::
 
+        # docstrings omitted
         harmonic.mean <- function(
             xs
         ){
@@ -586,7 +579,7 @@ def generate_dot_Call_wrapper(func_name: str,
     :return: The R wrapper for the provided C function
     :rtype: str
     """
-    docstring = ['#` @export'] if export else []
+    docstring = ['#\' @export'] if export else []
     wrapper_name = func_name.replace('_', '.')
     signature = [f'{wrapper_name} <- function(']
     wrapper_params = []
@@ -608,7 +601,8 @@ def generate_dot_Call_wrapper(func_name: str,
             wrapper_params.append('\t' + param.name)
             if param in sized_parameters:
                 size_checks.append(
-                    f'\tstopifnot(length({param.name}) >= {param.size})'
+                    f'\tstopifnot(length({param.name}) >= '
+                    f'{str(param.size).replace("/", "%/%")})'
                 )
             type_conversions.append(param.conversion)
         else:
@@ -653,18 +647,18 @@ def generate_C_wrapper_dot_Call(func_name: str,
         /* includes omitted */
         SEXP harmonic_mean_wrapper(
             SEXP p_n,
-            SEXP p_xs,
+            SEXP p_xs
         ){
             SEXP RETVAL = PROTECT(allocVector(REALSXP % MAX_NUM_SEXPTYPE, 1));
             int n = *(INTEGER(p_n));
-            double* xs = (double*)malloc(sizeof(double) * n);
+            double* xs = (double*)malloc(sizeof(double) * (n));
             for(int i = 0; i < n; i++) xs[i] = (REAL(p_xs))[i];
             *(REAL(RETVAL)) = harmonic_mean(n, xs);
             free(xs);
             UNPROTECT(1);
             return RETVAL;
         }
-    
+
     :param func_name: name of the base function
     :param params_list: list of :class:`Parameter`, parameters of ``func_name``
     :param return_type: return type of the base function, e.g. ``unsigned int``
@@ -689,7 +683,7 @@ def generate_C_wrapper_dot_Call(func_name: str,
         signature.append(f'\tSEXP p_{param.name},')
         if param.is_array():
             late.append(
-                '\t{0} {1} = ({0})malloc(sizeof({2}) * {3});'
+                '\t{0} {1} = ({0})malloc(sizeof({2}) * ({3}));'
                 .format(param.raw_type, param.name,
                         param.raw_type.replace('*', '', 1),
                         param.size)
@@ -730,13 +724,57 @@ def generate_C_wrapper_dot_Call(func_name: str,
                     .format(param.name, param.SEXP_conversion)
                 )
                 call.append(f'\tfree({param.name});')
-    signature[-1] = signature[-1][:-1]  # we need to trim the ',' after the last argument
+    # we need to trim the ',' after the last argument
+    signature[-1] = signature[-1][:-1]
     return '\n'.join(
         signature
         + middle
         + late
         + call
         + end
+    )
+
+
+# regular expressions used to extract information about function from doxygen
+# get rid of doxygen-typical notation for comments
+discarded_characters_pattern = re.compile(
+    r'(/\*\*)|(\*/)|(^\s*\*\s*)|(///)',
+    re.MULTILINE
+)
+# extract the `@return` command
+return_pattern = re.compile(r'[@\\]return.*$', re.DOTALL)
+# remove everything after the first parameter definition
+params_pattern = re.compile(r'[@\\]param.*$', re.DOTALL)
+
+
+def extract_doxygen(func: CppMethod, params: list[Parameter]):
+    arguments = []
+    raw = discarded_characters_pattern.sub('', func['doxygen'])
+
+    if any(p.is_out() for p in params):
+        returns = ["#' @return", "#' \\itemize{", "#' }"]
+    else:
+        returns = [
+            "#' " + s for s
+            in return_pattern.search(raw).group(0).split('\n')
+        ]
+
+    raw = params_pattern.sub('', raw).replace('@', '').split('\n')
+    description = ["#' " + s for s in raw]
+
+    for param in params:
+        if param.is_out():
+            returns.insert(
+                -1,
+                f"#'    \\item {param.name}: {param.description}"
+            )
+        else:
+            arguments.append(f"#' @param {param.name} {param.description}")
+
+    return '\n'.join(
+        description
+        + arguments
+        + returns
     )
 
 
@@ -755,13 +793,15 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
     :param out_dir: where to create files with wrappers
     :param init_file: path to ``init.c``, which is where symbol registration
         for R interaction typically resides
+    :param pkg_name: name of the target package, must be the same as the name field in DESCRIPTION
     :param namespace: functions for which we want wrappers to be created
     :param exp_namespace: functions which we want to export in final package
     :return: information about symbols that need to be registered
     """
-    Path(out_dir, 'R').mkdir(parents=True, exist_ok=True)
+    Path(out_dir, 'R')
     r_out_path = Path(out_dir, 'R', Path(path).name.replace('.h', '.R'))
-    c_out_path = Path(out_dir, 'src', Path(path).name.replace('.h', '_wrappers.c'))
+    c_out_path = Path(out_dir, 'src',
+                      Path(path).name.replace('.h', '_wrappers.c'))
     r_wrappers = []
     c_wrappers = []
     dot_c_functions = []
@@ -769,7 +809,7 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
 
     ret = set()
     for func in extract_functions_from_file(path):
-        func['rtnType'] = re.sub(type_qualifiers, '', func['rtnType'])
+        func['rtnType'] = type_qualifiers.sub('', func['rtnType'])
         # we're only interested in scalar values
         try:
             absolute_path = Path(path).absolute()
@@ -779,18 +819,22 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
             if namespace is None or name in namespace:
                 # likewise, if no NAMESPACE file is provided, we export all functions
                 export = exp_namespace is None or name in exp_namespace
-                if any(map(Parameter.is_out, params)):  # create a .C wrapper if there are output parameters
+                # create a .C wrapper if there are output parameters
+                if any(map(Parameter.is_out, params)):
                     r_wrapper = generate_dot_C_wrapper(name, params, export)
                     c_wrapper = generate_C_wrapper_dot_C(name, params)
                     ret.add(name)
 
                     print('extern void', name + '_wrapper', '(',
-                          ', '.join(dot_C_conversions[p.Rtype] for p in params),
+                          ', '.join(dot_C_conversions[p.Rtype]
+                                    for p in params),
                           ');', file=init_file)
                     dot_c_functions.append((name + '_wrapper', params))
                 elif func['rtnType'] != 'void':  # create a .Call/.External wrapper
                     r_wrapper = generate_dot_Call_wrapper(name, params, export)
-                    c_wrapper = generate_C_wrapper_dot_Call(name, params, func['rtnType'])
+                    c_wrapper = generate_C_wrapper_dot_Call(
+                        name, params, func['rtnType']
+                    )
                     ret.add(name)
                     print(
                         'extern SEXP', name + '_wrapper', '(',
@@ -807,7 +851,9 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
                     )
                     logging.info(message)
                     r_wrapper = c_wrapper = ''
-
+                if r_wrapper:
+                    r_wrapper = (extract_doxygen(func, params)
+                                 + '\n' + r_wrapper)
                 r_wrappers.append(r_wrapper)
                 c_wrappers.append(c_wrapper)
         except Exception as e:
@@ -827,8 +873,12 @@ def create_wrappers_for_header_file(path: Union[str, PathLike[str]],
         try:
             with open(c_out_path, 'w', encoding='utf-8') as fout:
                 write_cpp_directives(fout)
-                c_include_filename = PurePosixPath(path).relative_to(PurePosixPath(include_dir))
-                print(f'#include "{c_include_filename}"', end='\n\n\n', file=fout)
+                c_include_filename = (
+                    PurePosixPath(path)
+                    .relative_to(PurePosixPath(include_dir))
+                )
+                print(f'#include "{c_include_filename}"',
+                      end='\n\n\n', file=fout)
                 print('\n\n\n'.join(filter(None, c_wrappers)), file=fout)
         except IOError as e:
             message = f'Can\'t write C wrappers to {c_out_path}: {e}'
@@ -857,7 +907,8 @@ def read_namespace(path: str) -> Union[tuple[None, None], tuple[set[str], set[st
         message = 'Couldn\'t retrieve namespace file "{}", assuming all functions'
         logging.warning(message.format(Path(path).absolute()))
         return None, None
-    names = map(lambda x: re.sub(r'#.*$', '', x).strip(), names)  # remove comments
+    names = map(lambda x: re.sub(r'#.*$', '', x).strip(),
+                names)  # remove comments
     names = filter(None, names)  # remove empty lines
     export = set()
     wrapper = set()
@@ -919,8 +970,11 @@ def write_cpp_directives(out: TextIO, declarations: bool = False) -> None:
     print('#include<Rinternals.h>', file=out)
     print('#include<R_ext/Rdynload.h>', file=out, end='\n\n')
     if declarations:
-        print('#define CALL_DECL(name, n) {#name, (DL_FUNC) &name, n}', file=out)
-        print('#define C_DECL(name, n) {#name, (DL_FUNC) &name, n, name ## _args}',
+        print('#define CALL_DECL(name, n) '
+              '{#name, (DL_FUNC) &name, n}',
+              file=out)
+        print('#define C_DECL(name, n) {#name, '
+              '(DL_FUNC) &name, n, name ## _args}',
               file=out, end='\n\n')
 
 
@@ -938,6 +992,9 @@ additionally match kazoo.txt, and **oo.txt will match all of the above, as \
 well as a/oo.txt and a/b/zoo.txt''',
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
+    parser.add_argument('name', metavar='package_name',
+                        help='The name of your package, must be the '
+                             'same as the name field in your DESCRIPTION')
     parser.add_argument('infile', nargs='+',
                         help='C header files (or glob patterns) to be parsed')
     parser.add_argument('-o', '--out-dir', dest='out_dir', metavar='output_dir',
@@ -951,10 +1008,10 @@ well as a/oo.txt and a/b/zoo.txt''',
                         default=None)
     parser.add_argument('-v', '--verbose', dest='verbose', action='count',
                         help='Log more information, can be stacked up to 2 times. '
-                        'Concels out with -q', default=0)
+                             'Concels out with -q', default=0)
     parser.add_argument('-q', '--quiet', dest='quiet', action='count',
                         help='Log less information, can be stacked up to 2 times. '
-                        'Cancels out with -v', default=0)
+                             'Cancels out with -v', default=0)
     args = parser.parse_args()
 
     verbosity = min(5, max(0, 2+args.verbose-args.quiet))
@@ -979,8 +1036,20 @@ well as a/oo.txt and a/b/zoo.txt''',
 
     c_path = Path(args.out_dir, 'src')
     c_path.mkdir(exist_ok=True, parents=True)
+    r_path = Path(args.out_dir, 'R')
+    r_path.mkdir(exist_ok=True, parents=True)
     dot_C_funcs = []
     dot_Call_funcs = []
+
+    try:
+        with open(r_path / f'{args.name}.R', 'w') as fout:
+            print(
+                f"#' @useDynLib {args.name}, .registration = TRUE ",
+                file=fout
+            )
+            print('NULL\n#> NULL', file=fout)
+    except IOError as e:
+        logging.critical(f'Can\'t open {r_path / f"{args.name}"}: {e}')
 
     try:
         with open(c_path / 'init.c', 'w') as project_base:

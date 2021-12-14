@@ -1,14 +1,14 @@
-install.packages('testit', repos='https://cloud.r-project.org/')
-require(testit)
-if(Sys.info()['sysname'] == 'Windows'){
-	dyn.load('library.dll')
-}else{
-	dyn.load('library.so')
-}
-r_files_dir <- 'out/R'
-for(file in dir(r_files_dir)){
-  source(sprintf('%s/%s', r_files_dir, file))
-}
+install.packages(c('roxygen2', 'pkgbuild', 'testit'), repos='https://cloud.r-project.org/')
+library(testit)
+library(roxygen2)
+setwd('out')
+# build NAMESPACE file
+roxygenise(load_code = 'source', roclets = 'namespace')
+# build dev package
+roxygenise(roclets = c('collate', 'rd'))
+# load package
+library(ReGeneratorTest)
+
 # Asserts for a few select functions
 assert(no.params.int.return.function() %==% as.integer(-1))
 assert(no.params.unsigned.int.return.function() %==% as.integer(10));
