@@ -41,19 +41,24 @@ jobs:
           python -m doctest -v scripts/expressions.py
 
       - name: Run wrapper generator
-        run: python scripts/header_parser.py C_samples/*.h -vv
+        run: |
+          python scripts/header_parser.py C_samples/*.h -vv
+          python scripts/prepare.py C_samples DESCRIPTION out -v 0.1
      
       - name: Setup R
         run: sudo apt-get install -y r-base-core
         
+#      - name: Build package
+#        run: |
+#          cp C_samples/*.c out/src/
+#          mkdir out/include
+#          cp C_samples/*.h out/include/
+#          R CMD SHLIB -o library.so out/src/*.c
+#        env:
+#          PKG_CFLAGS: -Iout/include
       - name: Build package
         run: |
-          cp C_samples/*.c out/src/
-          mkdir out/include
-          cp C_samples/*.h out/include/
-          R CMD SHLIB -o library.so out/src/*.c
-        env:
-          PKG_CFLAGS: -Iout/include
+          sudo Rscript Rscripts/roxygen.R
           
       - name: Test package
         run: |

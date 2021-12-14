@@ -759,7 +759,7 @@ def extract_doxygen(func: CppMethod, params: list[Parameter]):
             in return_pattern.search(raw).group(0).split('\n')
         ]
 
-    raw = params_pattern.sub('', raw).split('\n')
+    raw = params_pattern.sub('', raw).replace('@', '').split('\n')
     description = ["#' " + s for s in raw]
 
     for param in params:
