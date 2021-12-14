@@ -11,13 +11,14 @@ def main():
         description='Prepares package files for building'
     )
     parser.add_argument(
-        'sources_dir',
+        'sources_dir', nargs='+',
         help='Directory which contains source files for your library',
         type=Path
     )
     parser.add_argument(
-        'desc_file', nargs='?',
-        metavar='DESCRIPTION_file',
+        '-d', '-desc-path',
+        dest='desc_file', nargs='?',
+        metavar='DESCRIPTION-file',
         help='''The path to the DESCRIPTION file for your package,
             ./DESCRIPTION by default. The file may use placeholder
             tags ##VERSION## and ##DATE## which will be replaced with
@@ -42,7 +43,7 @@ def main():
     out_dir: Path = args.out_dir
     desc_file: Path = args.desc_file
     version: str = args.version
-    src_dir: Path = args.sources_dir
+    src_dir: list[Path] = args.sources_dir
 
     (out_dir / 'src').mkdir(parents=True, exist_ok=True)
     try:
@@ -69,8 +70,9 @@ def main():
 
     out_dir /= 'src'
     try:
-        for file in glob(str(src_dir / '**.c')) + glob(str(src_dir / '**.h')):
-            copy(file, out_dir)
+        for directory in src_dir:
+            for file in glob(str(directory / '**.c')) + glob(str(directory / '**.h')):
+                copy(file, out_dir)
     except OSError as e:
         logging.critical("Couldn't copy source files (erred on {}): {}"
                          .format(file, e))

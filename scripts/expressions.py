@@ -40,6 +40,12 @@ class Expression:
         self.right = Expression(right)
 
     def __new__(cls, expr: str = None):
+        """
+        Thanks to this method, the Expression constructor can return
+        an int, a string, None, or an Expression object depending
+        on what kind of expression is passed to it.
+        :param expr: string representation of an expression
+        """
         expr = expr.strip() if expr is not None else ''
         if not expr:
             return None

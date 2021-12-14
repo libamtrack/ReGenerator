@@ -1,10 +1,6 @@
 install.packages('testit', repos='https://cloud.r-project.org/')
 require(testit)
-# if(Sys.info()['sysname'] == 'Windows'){
-# 	dyn.load('testpackage.dll')
-# }else{
-# 	dyn.load('testpackage.so')
-# }
+
 dyn.load(sprintf('out/src/testpackage%s', .Platform$dynlib.ext))
 r_files_dir <- 'out/R'
 for(file in dir(r_files_dir)){

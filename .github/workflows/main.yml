@@ -43,7 +43,7 @@ jobs:
       - name: Run wrapper generator
         run: |
           python scripts/header_parser.py C_samples/*.h -vv
-          python scripts/prepare.py C_samples DESCRIPTION -o out -v 0.1
+          python scripts/prepare.py C_samples --desc-path DESCRIPTION --out-dir out --version 0.1
      
       - name: Setup R
         run: sudo apt-get install -y r-base-core
@@ -82,7 +82,7 @@ jobs:
       - name: Run wrapper generator
         run: |
           python scripts/header_parser.py C_samples/*.h -vv
-          python scripts/prepare.py C_samples DESCRIPTION -o out -v 0.1
+          python scripts/prepare.py C_samples --desc-path DESCRIPTION --out-dir out --version 0.1
         
       - name: Setup R
         run: |
@@ -123,7 +123,7 @@ jobs:
       - name: Run wrapper generator
         run: |
           python scripts/header_parser.py C_samples/*.h -vv
-          python scripts/prepare.py C_samples DESCRIPTION -o out -v 0.1
+          python scripts/prepare.py C_samples --desc-path DESCRIPTION --out-dir out --version 0.1
      
       - name: Setup R
         run: |
