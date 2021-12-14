@@ -1,4 +1,4 @@
-install.packages('roxygen2', repos='https://cloud.r-project.org/')
+install.packages(c('roxygen2', 'pkgbuild'), repos='https://cloud.r-project.org/')
 library(roxygen2)
 setwd('out')
 # build NAMESPACE file
