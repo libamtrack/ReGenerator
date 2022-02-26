@@ -127,11 +127,11 @@ python header_parser.py --namespace ./NAMESPACE --out-dir ./out my_first_package
 The following steps need you to have the packages `roxygen2`, `pkgbuild` and `testit` installed as well as [rtools](https://cran.r-project.org/bin/windows/Rtools/rtools40.html) if you're using Windows.
 In order to be built, your package first needs a proper NAMESPACE file. To do this, [go to your target directory in R](https://learn-r.org/r-tutorial/setwd-r.php) and call
 ```
-roxygen2::roxygenise(load_code = 'source', roclets = 'namespace')
+roxygen2::roxygenise(load_code = 'source')
 ```
 At this point, you can create a either a testing package using
 ```
-roxygen2::roxygenise(roclets = c('collate', 'rd'))
+roxygen2::roxygenise(load_code = 'pkgload')
 ```
 or build and compress a production version using
 ```
